@@ -1,0 +1,19 @@
+<?php
+
+    define("SQL_HOST", "localhost");
+    define("SQL_BASE", "b0vesocial");
+    define("SQL_USER", "b0vesocial");
+    define("SQL_PASS", "");
+
+    define("MAIL_HOST", "smtp.gmail.com");
+    define("MAIL_PORT", "587");
+    define("MAIL_FROM", "");
+    define("MAIL_FROM_NAME", "B0vE Social");
+    define("MAIL_FROM_PASS", "");
+    define("MAIL_ADMIN", "");
+
+    define("ADMIN_CODE", "");
+
+    define("EXTERNAL_URL", "http://localhost/B0veSocial/");
+
+?>

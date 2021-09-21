@@ -1,0 +1,48 @@
+<div class="form-floating text-dark fs-6">
+    <textarea class="form-control" placeholder="Texto" id="postComposerText" style="height: 100px"></textarea>
+    <label for="postComposerText" id="postComposerTextLabel">Publica algo</label>
+</div>
+<div class="d-flex flex-row mt-1 flex-wrap">
+    <div class="d-flex flex-row flex-grow-1 mt-1">
+        <div class="btn btn-secondary mx-1 d-flex flex-column align-items-center justify-content-center" id="postComposerAddPhoto">
+            <i class="fas fa-image fs-3"></i>
+            <span>Agregar imagen</span>
+        </div>
+        <div class="btn btn-secondary mx-1 d-flex flex-column align-items-center justify-content-center" id="postComposerAddVideo">
+            <i class="fas fa-film fs-3"></i>
+            <span>Agregar video</span>
+        </div>
+    </div>
+    <div class="d-flex flex-row justifty-content-end align-items-start mt-1">
+        <span class="me-2 fs-5" id="postComposerCharCounter"></span>
+        <div class="btn btn-success mx-1 d-flex flex-column align-items-center justify-content-center" id="postComposerPostBtn">
+            <i class="fas fa-globe fs-3" id="postComposerPostBtnIcon"></i>
+            <div class="spinner-border text-light visually-hidden" role="status" id="postComposerPostBtnSpinner">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <span>Publicar</span>
+        </div>
+    </div>
+</div>
+<div class="mt-2 mx-1 p-1 ps-2 rounded bg-secondary d-flex flex-row justify-content-between align-items-center visually-hidden" id="postComposerPhoto">
+    <span>Una imagen agregada</span>
+    <div class="btn btn-sm btn-warning" id="postComposerRemovePhoto">
+        <i class="fas fa-times"></i>
+    </div>
+</div>
+<div class="mt-2 mx-1 p-1 ps-2 rounded bg-secondary d-flex flex-row justify-content-between align-items-center visually-hidden" id="postComposerVideo">
+    <span>Un video agregado</span>
+    <div class="btn btn-sm btn-warning" id="postComposerRemoveVideo">
+        <i class="fas fa-times"></i>
+    </div>
+</div>
+<div class="flex mt-2 visually-hidden" id="postComposerPostProgress">
+    <div class="progressBar">
+        <div class="progressBarInner" id="postComposerPostProgressBar"></div>
+    </div>
+</div>
+<div id="progressProcesing" class="visually-hidden">
+    Procesando video, puede tardar un tiempo.
+</div>
+
+<input id="fileInput" type="file" name="name" style="display: none;" />

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>B0vE Social</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous" />
+  <link rel="stylesheet" href="libs/bootstrap-modal-shake.css" />
+  <script src="https://kit.fontawesome.com/3afa5832cf.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="libs/commons.css" />
+</head>
+
+<body class="bg-dark text-light">
+
+  <div class="container">
+    <!-- Cabecera -->
+    <div
+      class="d-flex flex-column align-items-stretch border border-light p-2 m-1 justify-content-between align-items-center">
+      <div class="d-flex flex-row flex-wrap">
+        <div class="d-flex flex-grow-1 flex-row justify-content-start align-items-center">
+          <img class="profile-pic mx-3" id="profilePic">
+          <h4 id="profileName"></h4>
+          <span class="text-secondary ms-3" id="profileUser"></span>
+        </div>
+        <a href="" class="d-flex flex-column justify-content-center align-items-center" style="text-decoration: none;">
+          <i class="fas fa-cog text-light" style="font-size: 2rem;"></i>
+          <span class="d-none d-md-block text-light">Editar perfil</span>
+        </a>
+      </div>
+      <div
+        class="d-flex flex-row flex-wrap justify-content-around align-items-center border-top border-secondary mt-2 pt-1 px-3">
+        <div class="px-3 visually-hidden" id="profileDataCreacion">
+          <span class="fw-bold">Se unió el: </span>
+          <span></span>
+        </div>
+        <div class="px-3 visually-hidden" id="profileDataNacimiento">
+          <span class="fw-bold">Nacimiento: </span>
+          <span></span>
+        </div>
+        <div class="px-3 visually-hidden" id="profileDataSexo">
+          <span class="fw-bold">Sexo: </span>
+          <span></span>
+        </div>
+        <div class="px-3 visually-hidden" id="profileDataEstado">
+          <span class="fw-bold">Estado: </span>
+          <span></span>
+        </div>
+      </div>
+      <div class="d-flex border-top border-secondary visually-hidden px-3 mt-1" id="profileDataDescripcion"></div>
+      <div
+        class="d-flex flex-row flex-wrap justify-content-around align-items-center border-top border-secondary px-3 mt-1 pt-1">
+        <button type="button" class="btn btn-sm btn-secondary" id="contadorAcechadores"></button>
+        <button type="button" class="btn btn-sm btn-secondary" id="contadorAcechados"></button>
+        <button type="button" class="btn btn-outline-info" id="acecharBtn"><i class="fas fa-binoculars me-1"></i>
+          <span>Acechar</span></button>
+      </div>
+    </div>
+    <!-- Cuerpo -->
+    <div class="row">
+      <div class="col-1 d-none d-lg-block">lat1</div>
+      <div class="col-12 col-lg-7">
+        <div class="row p-2 m-1 mt-2 border border-light justify-content-between align-items-center">
+          <ul class="nav nav-tabs justify-content-center">
+            <li class="nav-item">
+              <a class="nav-link active" href="#" id="tabPublicaciones">Publicaciones</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link text-light" href="#" id="tabVociferado">Vociferado</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link text-light" href="#" id="tabFavoritos">Favoritos</a>
+            </li>
+          </ul>
+          <div class="d-flex flex-row flex-wrap justify-content-center mt-2">
+            <div class="form-check form-switch me-3">
+              <input class="form-check-input" type="checkbox" id="switchPostTexto">
+              <label class="form-check-label" for="switchPostTexto">Texto</label>
+            </div>
+            <div class="form-check form-switch me-3">
+              <input class="form-check-input" type="checkbox" id="switchPostImagenes">
+              <label class="form-check-label" for="switchPostImagenes">Imagenes</label>
+            </div>
+            <div class="form-check form-switch me-3">
+              <input class="form-check-input" type="checkbox" id="switchPostVideo">
+              <label class="form-check-label" for="switchPostVideo">Videos</label>
+            </div>
+          </div>
+        </div>
+        <div class="row p-2 m-1 mt-2 border border-light justify-content-between align-items-center" id="feedDiv"></div>
+      </div>
+      <div class="col-4 d-none d-lg-block">lat2</div>
+    </div>
+    <!-- Botones de -->
+    <div class="row"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script src="libs/bootstrap-modal-shake.js"></script>
+  <script type="module">
+    import API from "./libs/api.js";
+    import HELPEX from "./libs/helpex.js";
+    import CompLoader from "./libs/compLoader.js";
+    import SocialDrawer from "./libs/socialDrawer.js";
+    import PostComposer from "./libs/postComposer.js";
+
+    API.getUser().then(user => window.user = user.id).catch(() => location.href = "login.html");
+
+    var cUser;
+    API.getUserData("@" + HELPEX.sGet("sid"))
+      .then(user => {
+        cUser = user.id;
+
+        document.getElementById("profilePic").src = user.profilePic;
+        document.getElementById("profileName").innerText = user.nombre;
+        document.getElementById("profileUser").innerText = `(@${user.usuario})`;
+
+        if (user.creacion !== undefined) {
+          let profileDataCreacion = document.getElementById("profileDataCreacion");
+          profileDataCreacion.classList.remove("visually-hidden");
+          profileDataCreacion.lastElementChild.innerText = HELPEX.isoDate2textEsp(user.creacion);
+        }
+        if (user.nacimiento !== undefined) {
+          let profileDataNacimiento = document.getElementById("profileDataNacimiento");
+          profileDataNacimiento.classList.remove("visually-hidden");
+          profileDataNacimiento.lastElementChild.innerText = HELPEX.isoDate2textEsp(user.nacimiento);
+        }
+        if (user.sexo !== undefined) {
+          let profileDataSexo = document.getElementById("profileDataSexo");
+          profileDataSexo.classList.remove("visually-hidden");
+          profileDataSexo.lastElementChild.innerText = user.sexo;
+        }
+        if (user.estado !== undefined) {
+          let profileDataEstado = document.getElementById("profileDataEstado");
+          profileDataEstado.classList.remove("visually-hidden");
+          profileDataEstado.lastElementChild.innerText = user.estado;
+        }
+        if (user.descripcion !== undefined) {
+          let profileDataDescripcion = document.getElementById("profileDataDescripcion");
+          profileDataDescripcion.classList.remove("visually-hidden");
+          profileDataDescripcion.innerHTML = user.descripcion;
+        }
+
+        var contadorAcechadores = document.getElementById("contadorAcechadores");
+        var contadorAcechados = document.getElementById("contadorAcechados");
+        contadorAcechadores.innerText = user.acechadores + " Acechadores";
+        contadorAcechadores.addEventListener("click", () => {
+          SocialDrawer.displayList(API.getAcechadores(cUser), "Acechadores");
+        });
+        contadorAcechados.innerText = "Acechando " + user.acechados;
+        contadorAcechados.addEventListener("click", () => {
+          SocialDrawer.displayList(API.getAcechados(cUser), "Acechados");
+        });
+
+        var acecharBtn = document.getElementById("acecharBtn");
+        API.getAcechados()
+          .then(acechados => {
+            if (HELPEX.arrayDisect(acechados, "id").includes(cUser)) {
+              acecharBtn.classList.remove("btn-outline-info");
+              acecharBtn.classList.add("btn-outline-warning");
+              acecharBtn.lastElementChild.innerText = "Dejar de seguir";
+            }
+          })
+          .catch(HELPEX.generalUnespectedError);
+        acecharBtn.addEventListener("click", () => {
+          acecharBtn.disabled = true;
+          acecharBtn.firstElementChild.classList.remove("fa-binoculars");
+          acecharBtn.firstElementChild.classList.remove("fa-ban");
+          acecharBtn.firstElementChild.classList.add("fa-sync-alt");
+          acecharBtn.firstElementChild.classList.add("fa-spin");
+          API.doAcechar(cUser)
+            .then((acechado) => {
+              acecharBtn.disabled = false;
+              acecharBtn.firstElementChild.classList.remove("fa-sync-alt");
+              acecharBtn.firstElementChild.classList.remove("fa-spin");
+              if (acechado) {
+                acecharBtn.classList.remove("btn-outline-info");
+                acecharBtn.classList.add("btn-outline-warning");
+                acecharBtn.lastElementChild.innerText = "Dejar de acechar";
+                contadorAcechadores.innerText = (user.acechadores - -1) + " Acechadores";
+                acecharBtn.firstElementChild.classList.add("fa-ban");
+              } else {
+                acecharBtn.classList.add("btn-outline-info");
+                acecharBtn.classList.remove("btn-outline-warning");
+                acecharBtn.lastElementChild.innerText = "Acechar";
+                contadorAcechadores.innerText = (user.acechadores - 1) + " Acechadores";
+                acecharBtn.firstElementChild.classList.add("fa-binoculars");
+                acecharBtn.firstElementChild.classList.remove("fa-ban");
+              }
+            })
+            .catch(HELPEX.generalUnespectedError);
+        });
+
+        feedLoading = false;
+        fetchFeed();
+      })
+      .catch(error => HELPEX.showMSG("Error al cargar inicio", "Se ha producido un error al cargar la página de inicio", error));
+
+
+    var tabPublicaciones = document.getElementById("tabPublicaciones");
+    var tabVociferado = document.getElementById("tabVociferado");
+    var tabFavoritos = document.getElementById("tabFavoritos");
+    var switchPostTexto = document.getElementById("switchPostTexto");
+    var switchPostImagenes = document.getElementById("switchPostImagenes");
+    var switchPostVideo = document.getElementById("switchPostVideo");
+
+    tabPublicaciones.addEventListener("click", () => {
+      tabPublicaciones.classList.remove("text-light");
+      tabPublicaciones.classList.add("active");
+      tabVociferado.classList.add("text-light");
+      tabVociferado.classList.remove("active");
+      tabFavoritos.classList.add("text-light");
+      tabFavoritos.classList.remove("active");
+      typeFetch = API.getPosts;
+      refreshFeed();
+    });
+    tabVociferado.addEventListener("click", () => {
+      tabPublicaciones.classList.add("text-light");
+      tabPublicaciones.classList.remove("active");
+      tabVociferado.classList.remove("text-light");
+      tabVociferado.classList.add("active");
+      tabFavoritos.classList.add("text-light");
+      tabFavoritos.classList.remove("active");
+      typeFetch = API.getVociferados;
+      refreshFeed();
+    });
+    tabFavoritos.addEventListener("click", () => {
+      tabPublicaciones.classList.add("text-light");
+      tabPublicaciones.classList.remove("active");
+      tabVociferado.classList.add("text-light");
+      tabVociferado.classList.remove("active");
+      tabFavoritos.classList.remove("text-light");
+      tabFavoritos.classList.add("active");
+      typeFetch = API.getFavoritos;
+      refreshFeed();
+    });
+
+    switchPostTexto.addEventListener("change", () => {
+      if (switchPostTexto.checked) {
+        typeImage = false;
+        typeVideo = false;
+        switchPostImagenes.checked = false;
+        switchPostVideo.checked = false;
+      } else {
+        if (!switchPostImagenes.checked && !switchPostVideo.checked) {
+          typeImage = null;
+          typeVideo = null;
+        }
+      }
+      refreshFeed();
+    });
+    switchPostImagenes.addEventListener("change", () => {
+      if (switchPostImagenes.checked) {
+        typeImage = true;
+        typeVideo = false;
+        switchPostTexto.checked = false;
+        switchPostVideo.checked = false;
+      } else {
+        if (!switchPostTexto.checked && !switchPostVideo.checked) {
+          typeImage = null;
+          typeVideo = null;
+        }
+      }
+      refreshFeed();
+    });
+    switchPostVideo.addEventListener("change", () => {
+      if (switchPostVideo.checked) {
+        typeImage = false;
+        typeVideo = true;
+        switchPostTexto.checked = false;
+        switchPostImagenes.checked = false;
+      } else {
+        if (!switchPostTexto.checked && !switchPostImagenes.checked) {
+          typeImage = null;
+          typeVideo = null;
+        }
+      }
+      refreshFeed();
+    });
+
+    var typeImage = null, typeVideo = null, typeFetch = API.getPosts;
+    var feedDiv = document.getElementById("feedDiv");
+    var feedLoaded = 0;
+    var feedLoading = true;
+    function fetchFeed() {
+      if (!feedLoading) {
+        feedLoading = true;
+        typeFetch(cUser, typeImage, typeVideo, feedLoaded)
+          .then(feed => {
+            SocialDrawer.drawPosts(feed, feedDiv, refreshFeed);
+            feedLoaded += feed.length;
+            feedLoading = false;
+          })
+          .catch(error => HELPEX.showMSG("Error al cargar feed", "Se ha producido un error inesperado al cargar el feed", error));
+      }
+    }
+    function refreshFeed() {
+      HELPEX.removeAllChilds(feedDiv);
+      feedLoaded = 0;
+      feedLoading = false;
+      fetchFeed();
+    }
+    $(window).scroll(() => {
+      if ($(window).scrollTop() + $(window).height() >= $("#feedDiv").height()) fetchFeed();
+    });
+
+  </script>
+</body>
+
+</html>

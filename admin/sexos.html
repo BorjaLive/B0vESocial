@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>B0vE Social</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="../libs/bootstrap-modal-shake.css">
+    <script src="https://kit.fontawesome.com/3afa5832cf.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    
+    <div id="header"></div>
+
+    <div class="container">
+        <div class="d-flex justify-content-start mt-2">
+            <button type="button" class="btn btn-outline-primary" id="createBTN">Crear sexo</button>
+        </div>
+        <div id="tableDiv" class="mt-2"></div>
+    </div>
+
+    <div class="modal fade" tabindex="-1" id="createModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Crear sexo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="createNombre" class="form-label">Nombre del sexo</label>
+                        <input type="text" class="form-control" id="createNombre">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="createDoBTN">
+                        <div class="spinner-border spinner-border-sm text-light visually-hidden" role="status" id="createLoader"></div>
+                        Crear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" tabindex="-1" id="editModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Crear sexo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editNombre" class="form-label">Sexo</label>
+                        <input type="text" class="form-control" id="editNombre" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editNuevo" class="form-label">Nombre nuevo</label>
+                        <input type="text" class="form-control" id="editNuevo">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="editDoBTN">
+                        <div class="spinner-border spinner-border-sm text-light visually-hidden" role="status" id="editLoader"></div>
+                        Modificar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="../libs/bootstrap-modal-shake.js"></script>
+    <script type="module">
+        import API from '../libs/api.js';
+        import HELPEX from '../libs/helpex.js';
+        import CompLoader from '../libs/compLoader.js';
+        import TABLE from '../libs/table.js';
+
+        HELPEX.requireAdmin();
+        CompLoader.loadComp("adminHeader", "header")
+        .then(() => {
+            document.getElementById("configuracionTab").classList.add("active");
+            document.getElementById("sexosTab").classList.add("active");
+            document.getElementById("logOutBTN").addEventListener("click", HELPEX.logOutAdmin);
+        });
+
+        var createBTN = document.getElementById("createBTN");
+
+        var createModalEl = document.getElementById('createModal');
+        var createModal = new bootstrap.Modal(createModalEl, { backdrop: "static", focus: true, keyboard: false });
+        var createNombreInput = document.getElementById("createNombre");
+        var createDoBTN = document.getElementById("createDoBTN");
+        var createLoader = document.getElementById("createLoader");
+
+        var editModalEl = document.getElementById('editModal');
+        var editModal = new bootstrap.Modal(editModalEl, { backdrop: "static", focus: true, keyboard: false });
+        var editNombreInput = document.getElementById("editNombre");
+        var editNuevoInput = document.getElementById("editNuevo");
+        var editDoBTN = document.getElementById("editDoBTN");
+        var editLoader = document.getElementById("editLoader");
+
+        createBTN.addEventListener("click", () => {
+            createNombreInput.value = "";
+            createDoBTN.disabled = false;
+            createLoader.classList.add("visually-hidden");
+            createModal.show();
+        });
+
+        createDoBTN.addEventListener("click", () =>{
+            createDoBTN.disabled = true;
+            createLoader.classList.remove("visually-hidden");
+            API.createSexo(createNombreInput.value)
+            .then(() => {
+                createModal.hide();
+                TABLE.reloadTable();
+            })
+            .catch(error => HELPEX.showMSG("Error al crear sexo", "No se han podido crear el sexo", error));
+        });
+
+        editDoBTN.addEventListener("click", () =>{
+            editDoBTN.disabled = true;
+            editLoader.classList.remove("visually-hidden");
+            API.editSexo(editNombreInput.value, editNuevoInput.value)
+            .then(() => {
+                editModal.hide();
+                TABLE.reloadTable();
+            })
+            .catch(error => HELPEX.showMSG("Error al editar sexo", "No se han podido cambiar el nombre del sexo", error));
+        });
+        
+
+        TABLE.initializeTable([
+            {
+                name: "Sexo",
+                id: "-"
+            },
+            {
+                name: "",
+                id: {
+                    name: "Acciones",
+                    actions: [
+                        {
+                            name: "Editar",
+                            code: e => {
+                                editNombreInput.value = e;
+                                editNuevoInput.value = e;
+                                editDoBTN.disabled = false;
+                                editLoader.classList.add("visually-hidden");
+                                editModal.show();
+                            }
+                        },
+                        null,
+                        {
+                            name: "Eliminar",
+                            code: e => {
+                                API.deleteSexo(e)
+                                .then(() => TABLE.reloadTable())
+                                .catch(error => HELPEX.showMSG("Error al eliminar sexo", "No se ha podido eliminar el sexo", error))
+                            }
+                        }
+                    ]
+                }
+            }
+        ], [], "tableDiv", "getSexos");
+
+    </script>
+</body>
+
+</html>

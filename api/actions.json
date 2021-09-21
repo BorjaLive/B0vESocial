@@ -1,0 +1,42 @@
+{
+    "test": 0,
+
+    "registerUser": 0,
+    "resendUserActivationMail": 0,
+    "activateUser": 0,
+
+    "getPublicUser": 1,
+    "getPublicUserData": 1,
+    "getPost": 1,
+    "getPosts": 1,
+    "getVociferados": 1,
+    "getFavoritos": 1,
+    "getFeed": 1,
+    "getAcechados": 1,
+    "getAcechadores": 1,
+
+    "updateUserData": 1,
+
+    "deletePost": 1,
+    "doFavorito": 1,
+    "doVociferar": 1,
+    "doAcechar": 1,
+
+    "getEstados": 1,
+    "getSexos": 1,
+    
+    "useCodigoMoneda": 1,
+    "comprarTokiski": 1,
+
+    "getAdminIndexInfo": 2,
+    "createCodigoMoneda": 2,
+    "deleteCodigoMoneda": 2,
+    "createEstado": 2,
+    "deleteEstado": 2,
+    "editEstado": 2,
+    "createSexo": 2,
+    "deleteSexo": 2,
+    "editSexo": 2,
+
+    "getCodigoMonedas": 2
+}

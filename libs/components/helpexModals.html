@@ -1,0 +1,72 @@
+<div id="msgModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content text-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="msgTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <span id="msgBody"></span>
+                <textarea id="msgTextarea" style='width:100%;margin-top: 10px;' rows='5'></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" data-bs-dismiss="modal" class="btn btn-outline-secondary">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="confModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content text-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="confBody">
+            </div>
+            <div class="modal-footer">
+                <button type="button" data-bs-dismiss="modal" class="btn btn-outline-secondary" id="confCancelBTN">Cancelar</button>
+                <button type="button" class="btn btn-outline-primary" id="confBTN">
+                    <div class="spinner-border spinner-border-sm visually-hidden" role="status" id="confSpinner"></div>
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="selModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content text-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="selTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="selBody">
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="multiSelModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content text-dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="multiSelTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="multiSelBody">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-primary" onclick="multiSelSelect()">Seleccionar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="globalWaiting" style="position: fixed;top:0;left:0;width: 100%;height: 100%;background-color: #64B5F6;z-index: 1000000;opacity: .5;" class="d-flex justify-content-center align-items-center visually-hidden">
+    <div class="spinner-border text-primary" style="width: 5rem;height: 5rem;" role="status"></div>
+</div>
