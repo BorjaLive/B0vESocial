@@ -16,6 +16,7 @@
     "getAcechadores": 1,
 
     "updateUserData": 1,
+    "deleteProfilePic": 1,
 
     "deletePost": 1,
     "doFavorito": 1,

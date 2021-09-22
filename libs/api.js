@@ -51,9 +51,11 @@ function fetchFileAPI(properties, progressCallback) {
         let request = new XMLHttpRequest();
         request.open('POST', API_FILE_ENDPOINT);
 
-        request.upload.addEventListener('progress', function (e) {
-            progressCallback((e.loaded / e.total) * 100);
-        });
+        if(progressCallback != null){
+            request.upload.addEventListener('progress', function (e) {
+                progressCallback((e.loaded / e.total) * 100);
+            });
+        }
 
         request.addEventListener('load', function (e) {
             if (request.status == 200) {
@@ -150,6 +152,9 @@ export default {
     updateUserData: (nombre, nacimiento, sexo, estado, descripcion) => fetchAPI({
         action: "updateUserData",
         nombre, nacimiento, sexo, estado, descripcion
+    }),
+    deleteProfilePic: () => fetchAPI({
+        action: "deleteProfilePic"
     }),
 
     deletePost: (post) => fetchAPI({

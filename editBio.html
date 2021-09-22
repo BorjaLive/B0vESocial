@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>B0vE Social</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous" />
+  <link rel="stylesheet" href="libs/bootstrap-modal-shake.css" />
+  <script src="https://kit.fontawesome.com/3afa5832cf.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="libs/commons.css" />
+</head>
+
+<body class="bg-dark text-light">
+  <div class="container">
+    <!-- Cabecera -->
+    <div class="row">
+      <div class="col">
+        <div class="d-flex border border-light p-2 m-1 justify-content-start align-items-center">
+          <img class="profile-pic mx-3" id="profilePic">
+          <h4>Editar perfil</h4>
+        </div>
+      </div>
+    </div>
+    <!-- Cuerpo -->
+    <div class="row">
+      <!-- Columna de atajos -->
+      <div class="col-12 col-xl-1">
+        <div class="d-flex flex-row flex-wrap justify-content-around align-items-center border border-light my-1" id="hotKeysDiv"></div>
+      </div>
+      <!-- Ajustes de biografia -->
+      <div class="col-12 col-xl-11">
+        <div class="container border border-light m-1 p-2">
+          <div class="row justify-content-center">
+            <div class="col-12 col-lg-4">
+              <div class="p-3 d-flex flex-column justify-content-center align-items-center">
+                <img class="profile-pic mb-3" style="height:6rem;width:6rem;" id="datoPic">
+                <div class="d-flex flex-row flex-wrap justify-content-center align-items-center">
+                  <button type="button" class="btn btn-primary m-1" id="picChangeBtn"><i class="fas fa-cloud-upload-alt me-2"></i><span>Cambiar</span></button>
+                  <button type="button" class="btn btn-danger m-1" id="picDeleteBtn"><i class="fas fa-trash me-2"></i><span>Eliminar</span></button>
+                </div>
+                <input id="fileInput" type="file" name="name" style="display: none;" />
+              </div>
+            </div>
+            <div class="col-12 col-lg-4">
+              <div class="p-3">
+                <label for="datoNombre" class="form-label">Nombre</label>
+                <input type="text" class="form-control" id="datoNombre">
+              </div>
+            </div>
+            <div class="col-12 col-lg-4">
+              <div class="p-3">
+                <label for="datoNacimiento" class="form-label">Fecha de nacimiento</label>
+                <input type="date" class="form-control" id="datoNacimiento">
+              </div>
+            </div>
+            <div class="col-12 col-lg-4">
+              <div class="p-3">
+                <label for="datoSexo" class="form-label">Sexo</label>
+                <select id="datoSexo" class="form-select">
+                </select>
+              </div>
+            </div>
+            <div class="col-12 col-lg-4">
+              <div class="p-3">
+                <label for="datoEstado" class="form-label">Estado</label>
+                <select id="datoEstado" class="form-select">
+                </select>
+              </div>
+            </div>
+            <div class="col-12 col-lg-8">
+              <div class="p-3">
+                <label class="form-label" for="datoDescripcion">Descripcion</label>
+                <textarea class="form-control" placeholder="Habla un poco de ti a la comunidad" id="datoDescripcion" style="height: 100px"></textarea>
+                <div class="form-text text-light">Admite etiquetas HTML.</div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col text-center">
+                <button type="button" class="btn btn-secondary" id="saveBtn"><i class="fas fa-save me-2"></i><span>Guardar</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script src="libs/bootstrap-modal-shake.js"></script>
+  <script type="module">
+    import API from "./libs/api.js";
+    import HELPEX from "./libs/helpex.js";
+    import CompLoader from "./libs/compLoader.js";
+    import SocialDrawer from "./libs/socialDrawer.js";
+    import PostComposer from "./libs/postComposer.js";
+    import {PROFILE_PIC_PLACEHOLDER} from "./libs/constants.js";
+
+    API.getUser().then(user => window.user = user.id).catch(() => location.href="login.html");
+    SocialDrawer.loadHotKeys(document.getElementById("hotKeysDiv"));
+
+    var datoPic = document.getElementById("datoPic");
+    var picChangeBtn = document.getElementById("picChangeBtn");
+    var picDeleteBtn = document.getElementById("picDeleteBtn");
+    var fileInput = document.getElementById("fileInput");
+    var datoNombre = document.getElementById("datoNombre");
+    var datoNacimiento = document.getElementById("datoNacimiento");
+    var datoSexo = document.getElementById("datoSexo");
+    var datoEstado = document.getElementById("datoEstado");
+    var datoDescripcion = document.getElementById("datoDescripcion");
+    var saveBtn = document.getElementById("saveBtn");
+
+    var cUser, userData;
+    API.getUserData()
+    .then(user => {
+      cUser = user.id;
+      userData = user;
+      document.getElementById("profilePic").src = user.profilePic;
+      datoPic.src = HELPEX.cacheBreak(user.profilePic);
+
+      datoNombre.value = user.nombre;
+      if(user.nacimiento != null) datoNacimiento.value = user.nacimiento;
+      API.getSexos()
+      .then(sexos => {
+        datoSexo.appendChild(HELPEX.createSelectOption("null", "Sin especificar"));
+        sexos.forEach(sexo => {
+          datoSexo.appendChild(HELPEX.createSelectOption(sexo, sexo));
+        });
+        if(user.sexo != null) datoSexo.value = user.sexo;
+      }).catch(HELPEX.generalUnespectedError);
+      API.getEstados()
+      .then(estados => {
+        datoEstado.appendChild(HELPEX.createSelectOption("null", "Sin especificar"));
+        estados.forEach(estado => {
+          datoEstado.appendChild(HELPEX.createSelectOption(estado, estado));
+        });
+        if(user.estado != null) datoEstado.value = user.estado;
+      }).catch(HELPEX.generalUnespectedError);
+      if(user.descripcion != null) datoNacimiento.value = user.descripcion;
+    })
+    .catch(error => HELPEX.showMSG("Error al cargar datos de usuario", "Se ha producido un error al cargar los datos de usuario", error));
+
+    datoNombre.addEventListener("keypress", allowSave);
+    datoNacimiento.addEventListener("change", allowSave);
+    datoSexo.addEventListener("change", allowSave);
+    datoEstado.addEventListener("change", allowSave);
+    datoDescripcion.addEventListener("change", allowSave);
+    saveBtn.addEventListener("click", () =>{
+      saveBtn.firstElementChild.classList.add("fa-sync-alt");
+      saveBtn.firstElementChild.classList.add("fa-spin");
+      saveBtn.firstElementChild.classList.remove("fa-save");
+      saveBtn.disabled = true;
+      API.updateUserData(datoNombre.value==""?userData.usuario:datoNombre.value, datoNacimiento.value==""?null:datoNacimiento.value, datoSexo.value=="null"?null:datoSexo.value, datoEstado.value=="null"?null:datoEstado.value, datoDescripcion.value==""?null:datoDescripcion.value)
+      .then(() => {
+        saveBtn.firstElementChild.classList.remove("fa-sync-alt");
+        saveBtn.firstElementChild.classList.remove("fa-spin");
+        saveBtn.firstElementChild.classList.add("fa-save");
+        saveBtn.disabled = false;
+        saveBtn.classList.add("btn-secondary");
+        saveBtn.classList.remove("btn-success");
+      })
+      .catch(error => HELPEX.showMSG("Error al guardar datos", "No se han podido guardar los datos de usuario", error));
+    });
+
+    function allowSave(){
+      saveBtn.classList.remove("btn-secondary");
+      saveBtn.classList.add("btn-success");
+    }
+
+    picChangeBtn.addEventListener("click", () => {
+      fileInput.click();
+    });
+    fileInput.addEventListener("change", () => {
+      picChangeBtn.firstElementChild.classList.add("fa-sync-alt");
+      picChangeBtn.firstElementChild.classList.add("fa-spin");
+      picChangeBtn.firstElementChild.classList.remove("fa-cloud-upload-alt");
+      picChangeBtn.disabled = true;
+      API.changeProfilePic(null, fileInput.files[0])
+      .then(() => {
+        picChangeBtn.firstElementChild.classList.remove("fa-sync-alt");
+        picChangeBtn.firstElementChild.classList.remove("fa-spin");
+        picChangeBtn.firstElementChild.classList.add("fa-cloud-upload-alt");
+        picChangeBtn.disabled = false;
+        datoPic.src = PROFILE_PIC_PLACEHOLDER;
+        setTimeout(() => datoPic.src = HELPEX.cacheBreak(userData.profilePic), 500);
+      })
+      .catch(error => HELPEX.showMSG("Error al actualizar imagen de perfil", "No se ha podido actualizar la imagen de perfil"));
+    });
+
+    picDeleteBtn.addEventListener("click", () => {
+      picDeleteBtn.firstElementChild.classList.add("fa-sync-alt");
+      picDeleteBtn.firstElementChild.classList.add("fa-spin");
+      picDeleteBtn.firstElementChild.classList.remove("fa-trash");
+      picDeleteBtn.disabled = true;
+      API.deleteProfilePic()
+      .then(() => {
+        picDeleteBtn.firstElementChild.classList.remove("fa-sync-alt");
+        picDeleteBtn.firstElementChild.classList.remove("fa-spin");
+        picDeleteBtn.firstElementChild.classList.add("fa-trash");
+        picDeleteBtn.disabled = false;
+        datoPic.src = PROFILE_PIC_PLACEHOLDER;
+        setTimeout(() => datoPic.src = HELPEX.cacheBreak(userData.profilePic), 500);
+      })
+      .catch(error => HELPEX.showMSG("Error al eliminar imagen de perfil", "No se ha podido eliminar la imagen de perfil"));
+    });
+    
+
+  </script>
+</body>
+
+</html>

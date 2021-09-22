@@ -131,6 +131,11 @@
             $stmt->close();
         }
     }
+    function deleteProfilePic(){
+        global $userID;
+        
+        copy(randomFileFromDir("../data/defaultProfiles"), "../data/profiles/$userID.jpg");
+    }
 
 
     function createPost($texto, $padre, $imagen = false, $video = false){
@@ -423,8 +428,10 @@
 
             $data["respuestas"] = [];
             foreach($respuestas as $respuesta){
-                $data["respuestas"] = getPost($respuesta);
+                $data["respuestas"][] = getPost($respuesta);
             }
+
+            if($data["padre"] !== null) $data["padre"] = getPost($data["padre"]);
         }
 
         return $data;
@@ -433,7 +440,7 @@
         global $link;
 
         list($tipos, $parametros, $where) = postPrepareParameter($usuario, $foto, $video, $inicio);
-        $stmt = $link->prepare("SELECT `post`.`id`, `texto`, `foto`, `video`, `post`.`usuario`, `usuario`.`usuario`, `fecha`, `nombre` FROM `post` INNER JOIN `usuario` ON(`post`.`usuario` = `usuario`.`id`) WHERE `post`.`usuario` = ? $where  LIMIT ? OFFSET ?");
+        $stmt = $link->prepare("SELECT `post`.`id`, `texto`, `foto`, `video`, `post`.`usuario`, `usuario`.`usuario`, `fecha`, `nombre` FROM `post` INNER JOIN `usuario` ON(`post`.`usuario` = `usuario`.`id`) WHERE `post`.`usuario` = ? $where ORDER BY `fecha` DESC  LIMIT ? OFFSET ?");
         if($link->error) throw new Exception($link->error);
         $stmt->bind_param($tipos, ...$parametros);
     

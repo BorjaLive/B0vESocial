@@ -29,6 +29,9 @@ export default {
             var postComposerPostProgressBar = document.getElementById("postComposerPostProgressBar");
             var progressProcesing = document.getElementById("progressProcesing");
             var fileInput = document.getElementById("fileInput");
+            var postComposerResponse = document.getElementById("postComposerResponse");
+
+            if(parent === null) postComposerResponse.classList.add("visually-hidden");
 
             postComposerTextLabel.innerText = incentivos[Math.floor(Math.random()*incentivos.length)];
 

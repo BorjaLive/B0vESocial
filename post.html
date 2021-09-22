@@ -16,24 +16,87 @@
 
   <div class="container">
     <!-- Cabecera -->
-    <div class="d-flex border border-light p-2 m-1 justify-content-start align-items-center">
-      <img class="profile-pic mx-3" id="profilePic">
-      <div class="d-flex flex-row flex-wrap justify-content-start align-items-center">
-        <h4>Inicio</h4>
-        <span class="text-secondary ms-3">asdasd</span>
+    <div class="row">
+      <div class="col">
+        <div class="d-flex border border-light p-2 m-1 justify-content-start align-items-center" id="postPageHeader">
+          <img class="profile-pic mx-3" id="postPageProfilePic">
+          <div class="d-flex flex-row flex-wrap justify-content-start align-items-center">
+            <h4 id="postPageName"></h4>
+            <span class="text-secondary ms-3" id="postPageUser"></span>
+          </div>
+        </div>
       </div>
     </div>
     <!-- Cuerpo -->
     <div class="row">
-      <div class="col-1 d-none d-lg-block">lat1</div>
-      <div class="col-12 col-lg-7">
-        <div class="row d-flex flex-column border border-light p-2 m-1 justify-content-between align-items-center" id="postComposer"></div>
-        <div class="row p-2 m-1 mt-2 border border-light justify-content-between align-items-center" id="feedDiv"></div>
+      <!-- Columna de atajos -->
+      <div class="col-12 col-xl-1 col-xxl-1">
+        <div class="d-flex flex-row flex-wrap justify-content-around align-items-center border border-light my-1" id="hotKeysDiv"></div>
       </div>
-      <div class="col-4 d-none d-lg-block">lat2</div>
+      <!-- Selector y posts -->
+      <div class="col-12 col-xl-7">
+
+        <div class="row border border-light my-1 visually-hidden" id="postPageFather">
+          <h5>En respuesta a:</h5>
+          <div id="postPageFatherPost"></div>
+        </div>
+
+        <div class="row mt-1 border border-light d-flex flex-column px-2 visually-hidden" id="postPageContent">
+          <spam class="fs-5 mb-2" id="postPageText"></spam>
+          <img class="rounded align-self-center visually-hidden" style="width: 80%;" id="postPageImage">
+          <video controls class="rounded align-self-center visually-hidden" style="width: 80%;"
+            id="postPageVideo"></video>
+          <span class="text-end mt-2" id="postPageFecha"></span>
+          <div
+            class="d-flex flex-row flex-wrap justify-content-around align-items-start mt-1 pt-3 border-top border-secondary">
+            <div class="d-flex flex-column jusfity-content-start align-items-center">
+              <button class="btn btn-outline-secondary" type="button" title="Vociferar" id="postPageVociferarBtn">
+                <i class="fas fa-bullhorn" style="font-size: 2rem;" id="postPageVociferarIcon"></i>
+                <div class="spinner-border visually-hidden" id="postPageVociferarSpinner"></div>
+              </button>
+              <span class="fs-5 text-success" id="postPageVociferarCounter"></span>
+            </div>
+            <div class="d-flex flex-column jusfity-content-start align-items-center">
+              <button class="btn btn-outline-secondary" type="button" title="Favorito" id="postPageFavoritoBtn">
+                <i class="fas fa-star" style="font-size: 2rem;" id="postPageFavoritoIcon"></i>
+                <div class="spinner-border visually-hidden" id="postPageFavoritoSpinner"></div>
+              </button>
+              <span class="fs-5" style="color:gold" id="postPageFavoritoCounter"></span>
+            </div>
+            <button class="btn btn-outline-secondary" type="button" title="Medallas" id="postPageMedallaBtn">
+              <i class="fas fa-award text-warning" style="font-size: 2rem;" id="postPageMedallaIcon"></i>
+              <div class="spinner-border visually-hidden" id="postPageMedallaSpinner"></div>
+            </button>
+            <button class="btn btn-outline-secondary" type="button" title="Eliminar" id="postPageEliminarBtn">
+              <i class="fas fa-times text-danger" style="font-size: 2rem;" id="postPageEliminarIcon"></i>
+              <div class="spinner-border visually-hidden" id="postPageEliminarSpinner"></div>
+            </button>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-center" id="postPageSpinner">
+          <div class="spinner-grow text-secondary" style="width: 3rem; height: 3rem;" role="status"></div>
+        </div>
+
+        <div class="row d-flex flex-column border border-light p-2 my-1 justify-content-between align-items-center" id="postComposer"></div>
+
+        <div class="row border border-light d-flex flex-column align-items-stretch visually-hidden" id="postPageFooter">
+          <div class="d-flex flex-row justify-content-between">
+              <h5 id="postPageResponsesText"></h5>
+              <div class="btn btn-primary" id="postPageComentBtn"><i class="fas fa-feather-alt me-2"></i>Comentar
+              </div>
+          </div>
+          <div id="postPageResponses"></div>
+      </div>
+
+      </div>
+      <!-- Columna de desafios diarios -->
+      <div class="col-4 d-none d-lg-block">
+        <div class="d-flex border border-light m-1">
+          Tareas diarias
+        </div>
+      </div>
     </div>
-    <!-- Botones de -->
-    <div class="row"></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
@@ -48,14 +111,24 @@
     import SocialDrawer from "./libs/socialDrawer.js";
     import PostComposer from "./libs/postComposer.js";
 
-    API.getUser().then(user => window.user = user.id).catch(() => location.href="login.html");
+    API.getUser().then(user => window.user = user.id).catch(() => location.href = "login.html");
+    SocialDrawer.loadHotKeys(document.getElementById("hotKeysDiv"));
+    
+    var elems = {};
+    SocialDrawer.pModalElements.forEach(e => elems[e] = document.getElementById("postPage" + e));
+    console.log(elems);
 
     var cPost = HELPEX.sGet("id");
-    API.getPost(cPost)
-    .then(post => {
-      console.log(post);
-    })
-    .catch(() => location.href = "index.html");
+    function loadPost() {
+      API.getPost(cPost, true)
+        .then(post => {
+          SocialDrawer.openPost(post, elems, loadPost);
+        })
+        .catch(HELPEX.generalUnespectedError)
+      //.catch(() => location.href = "index.html");
+    }
+    loadPost();
+    PostComposer.iniPostComposer("postComposer", loadPost, cPost);
 
   </script>
 </body>

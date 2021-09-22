@@ -84,15 +84,16 @@ function drawPost(data, refreshAction = null){
         pModal.Content.classList.add("visually-hidden");
         pModal.Footer.classList.add("visually-hidden");
         pModal.Spinner.classList.remove("visually-hidden");
-        console.log("mostrar");
-        HELPEX.hideAllModals(null, postModal);
+        
+        HELPEX.hideAllModals(postModal, postModal);
 
         API.getPost(data.id, true)
-        .then(post => openPost(post, refreshAction))
+        .then(post => openPost(post, pModal, refreshAction))
         .catch(error => HELPEX.showMSG("Error al abrir publicación", "No se ha podido obtener la publicación", error));
     });
 
     container.appendChild(userSection);
+    container.appendChild(smallHR());
     container.appendChild(postSection);
     return container;
 }
@@ -100,87 +101,93 @@ function drawPosts(posts, div, refreshAction = null){
     posts.forEach(post => div.appendChild(drawPost(post, refreshAction)));
 }
 
-function openPost(data, refreshAction = null){
+function openPost(data, elems, refreshAction = null){
     console.log(data);
 
-    pModal.ProfilePic.src = data.usuario.profilePic;
-    pModal.Name.innerText = data.usuario.nombre;
-    pModal.User.innerText = `(@${data.usuario.usuario})`;
+    elems.Header.style.cursor = "pointer";
+    elems.Header.onclick = () => location.href = "user.html?sid="+data.usuario.usuario;
 
-    pModal.Text.innerHTML = stylizeTest(data.texto);
+    elems.ProfilePic.src = data.usuario.profilePic;
+    elems.Name.innerText = data.usuario.nombre;
+    elems.User.innerText = `(@${data.usuario.usuario})`;
+
+    elems.Text.innerHTML = stylizeTest(data.texto);
     if(data.foto !== null){
-        pModal.Image.src = data.foto;
-        pModal.Image.classList.remove("visually-hidden");
-    }else pModal.Image.classList.add("visually-hidden");
+        elems.Image.src = data.foto;
+        elems.Image.classList.remove("visually-hidden");
+    }else elems.Image.classList.add("visually-hidden");
     if(data.video !== null){
-        pModal.Video.src = data.video;
-        pModal.Video.classList.remove("visually-hidden");
-    }else pModal.Video.classList.add("visually-hidden");
-    pModal.Fecha.innerText = HELPEX.isoDate2esp(data.fecha);
+        elems.Video.src = data.video;
+        elems.Video.classList.remove("visually-hidden");
+    }else elems.Video.classList.add("visually-hidden");
+    elems.Fecha.innerText = HELPEX.isoDate2esp(data.fecha);
 
-    pModal.ResponsesText.innerText = `Respuestas (${data.respuestas.length}):`;
-    pModal.ComentBtn.onclick = () => location.href=`post.html?id=${data.id}`;
-    HELPEX.removeAllChilds(pModal.Responses);
-    data.respuestas.forEach(respuesta => pModal.Responses.appendChild(drawPost(respuesta)));
+    elems.ResponsesText.innerText = `Respuestas (${data.respuestas.length}):`;
+    if(elems === pModal)//HELPEX.getLocationFileName() == "post"
+        elems.ComentBtn.onclick = () => location.href=`post.html?id=${data.id}`;
+    else
+        elems.ComentBtn.classList.add("visually-hidden");
+    HELPEX.removeAllChilds(elems.Responses);
+    data.respuestas.forEach(respuesta => elems.Responses.appendChild(drawPost(respuesta)));
 
     if(data.padre !== null){
-        HELPEX.removeAllChilds(pModal.FatherPost);
-        pModal.Responses.appendChild(drawPost(data.padre));
-        pModal.Father.classList.remove("visually-hidden");
-    }else pModal.Father.classList.add("visually-hidden");
+        HELPEX.removeAllChilds(elems.FatherPost);
+        elems.FatherPost.appendChild(drawPost(data.padre));
+        elems.Father.classList.remove("visually-hidden");
+    }else elems.Father.classList.add("visually-hidden");
 
-    pModal.VociferarIcon.classList.add(data.vociferado?"text-success":"text-light");
-    pModal.VociferarBtn.onclick = () => {
-        pModal.VociferarBtn.disabled = true;
-        pModal.VociferarSpinner.classList.remove("visually-hidden");
-        pModal.VociferarIcon.classList.add("visually-hidden");
+    elems.VociferarIcon.classList.add(data.vociferado?"text-success":"text-light");
+    elems.VociferarBtn.onclick = () => {
+        elems.VociferarBtn.disabled = true;
+        elems.VociferarSpinner.classList.remove("visually-hidden");
+        elems.VociferarIcon.classList.add("visually-hidden");
         API.doVociferar(data.id)
         .then(vociferado => {
-            pModal.VociferarBtn.disabled = false;
-            pModal.VociferarSpinner.classList.add("visually-hidden");
-            pModal.VociferarIcon.classList.remove("visually-hidden");
+            elems.VociferarBtn.disabled = false;
+            elems.VociferarSpinner.classList.add("visually-hidden");
+            elems.VociferarIcon.classList.remove("visually-hidden");
             if(vociferado){
-                pModal.VociferarIcon.classList.add("text-success");
-                pModal.VociferarIcon.classList.remove("text-light");
-                pModal.VociferarCounter.innerText -= -1;
+                elems.VociferarIcon.classList.add("text-success");
+                elems.VociferarIcon.classList.remove("text-light");
+                elems.VociferarCounter.innerText -= -1;
             }else{
-                pModal.VociferarIcon.classList.remove("text-success");
-                pModal.VociferarIcon.classList.add("text-light");
-                pModal.VociferarCounter.innerText -= 1;
+                elems.VociferarIcon.classList.remove("text-success");
+                elems.VociferarIcon.classList.add("text-light");
+                elems.VociferarCounter.innerText -= 1;
             }
         })
         .catch(HELPEX.generalUnespectedError);
     };
-    pModal.VociferarCounter.innerText = data.vociferados;
+    elems.VociferarCounter.innerText = data.vociferados;
 
-    pModal.FavoritoIcon.style.color = data.favorito?"gold":"#f8f9fa";
-    pModal.FavoritoBtn.onclick = () => {
-        pModal.FavoritoBtn.disabled = true;
-        pModal.FavoritoSpinner.classList.remove("visually-hidden");
-        pModal.FavoritoIcon.classList.add("visually-hidden");
+    elems.FavoritoIcon.style.color = data.favorito?"gold":"#f8f9fa";
+    elems.FavoritoBtn.onclick = () => {
+        elems.FavoritoBtn.disabled = true;
+        elems.FavoritoSpinner.classList.remove("visually-hidden");
+        elems.FavoritoIcon.classList.add("visually-hidden");
         API.doFavorito(data.id)
         .then(favorito => {
-            pModal.FavoritoBtn.disabled = false;
-            pModal.FavoritoSpinner.classList.add("visually-hidden");
-            pModal.FavoritoIcon.classList.remove("visually-hidden");
+            elems.FavoritoBtn.disabled = false;
+            elems.FavoritoSpinner.classList.add("visually-hidden");
+            elems.FavoritoIcon.classList.remove("visually-hidden");
             if(favorito){
-                pModal.FavoritoIcon.style.color = "gold";
-                pModal.FavoritoCounter.innerText -= -1;
+                elems.FavoritoIcon.style.color = "gold";
+                elems.FavoritoCounter.innerText -= -1;
             }else{
-                pModal.FavoritoIcon.style.color = "#f8f9fa";
-                pModal.FavoritoCounter.innerText -= 1;
+                elems.FavoritoIcon.style.color = "#f8f9fa";
+                elems.FavoritoCounter.innerText -= 1;
             }
         })
         .catch(HELPEX.generalUnespectedError);
     };
-    pModal.FavoritoCounter.innerText = data.favoritos;
+    elems.FavoritoCounter.innerText = data.favoritos;
 
     //Medallas
 
     if(data.usuario.id !== window.user){
-        pModal.EliminarBtn.classList.add("visually-hidden");
+        elems.EliminarBtn.classList.add("visually-hidden");
     }
-    pModal.EliminarBtn.onclick = () => {
+    elems.EliminarBtn.onclick = () => {
         HELPEX.showConf("Eliminar publicación", "¿Seguro que deseas eliminar esta publicación?", true)
         .then(() => {
             API.deletePost(data.id)
@@ -195,10 +202,10 @@ function openPost(data, refreshAction = null){
         });
     };
     
-    pModal.Header.classList.remove("visually-hidden");
-    pModal.Content.classList.remove("visually-hidden");
-    pModal.Footer.classList.remove("visually-hidden");
-    pModal.Spinner.classList.add("visually-hidden");
+    elems.Header.classList.remove("visually-hidden");
+    elems.Content.classList.remove("visually-hidden");
+    elems.Footer.classList.remove("visually-hidden");
+    elems.Spinner.classList.add("visually-hidden");
 }
 
 function displayList(res, title = "Lista de usuarios"){
@@ -240,10 +247,23 @@ function displayList(res, title = "Lista de usuarios"){
     }).catch(HELPEX.generalUnespectedError);
 }
 
-//TODO: Crear el modal que muestra
+function smallHR(){
+    let hr = document.createElement("hr");
+    hr.style.marginTop = ".5rem";
+    hr.style.marginBottom = ".2rem";
+    return hr;
+}
+
+function loadHotKeys(div){
+    CompLoader.loadComp("hotkeys", div)
+    .catch(HELPEX.generalUnespectedError);
+}
 
 export default {
     drawPost,
     drawPosts,
-    displayList
+    displayList,
+    openPost,
+    loadHotKeys,
+    pModalElements
 }

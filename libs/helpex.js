@@ -59,6 +59,10 @@ function globalLoaderHide(){
 }
 function hideAllModals(except = null, open = null){
     globalLoaderShow();
+    if(except !== null && except instanceof Element)
+        except = except.id;
+    if(open !== null && !(open instanceof Element))
+        open = document.getElementById("open");
     setTimeout(() => {
         globalLoaderHide();
         let modals = document.getElementsByClassName("modal");
@@ -151,6 +155,16 @@ export default {
             });
         return result;
     },
+    getLocationFileName: (parameterName) =>{
+        return location.pathname.split("/").pop().split(".").shift();
+    },
+    createSelectOption: (value, text) => {
+        let opt = document.createElement("option");
+        opt.value = value;
+        opt.text = text;
+        return opt;
+    },
+    cacheBreak: url => url+"?"+(new Date().getTime()),
     arrayDisect: (array, key) => {
         let res = [];
         array.forEach(e => {
