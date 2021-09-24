@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>B0vE Social</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous" />
+  <link rel="stylesheet" href="libs/bootstrap-modal-shake.css" />
+  <script src="https://kit.fontawesome.com/3afa5832cf.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="libs/commons.css" />
+  <link rel="stylesheet" href="font/style.css">
+</head>
+
+<body class="bg-dark text-light">
+  <div class="container">
+    <!-- Cabecera -->
+    <div class="row">
+      <div class="col">
+        <div class="d-flex border border-light p-2 m-1 justify-content-start align-items-center">
+          <img class="profile-pic mx-3" id="profilePic">
+          <h4>Inicio</h4>
+        </div>
+      </div>
+    </div>
+    <!-- Cuerpo -->
+    <div class="row">
+      <!-- Columna de atajos -->
+      <div class="col-12 col-xl-1 col-xxl-1">
+        <div class="d-flex flex-row flex-wrap justify-content-around align-items-center border border-light my-1" id="hotKeysDiv"></div>
+      </div>
+      <!-- Tienda -->
+      <div class="col-12 col-xl-11">
+
+        <h4 class="mt-3">Balance de tu cuenta:</h4>
+        <div class="d-flex flex-column justify-content-center align-items-center border border-light mt-1 p-1">
+          <div class="d-flex flex-row justify-content-start align-items-center" id="balanceDiv"></div>
+          <div class="d-flex flex-row justify-content-start align-items-center pt-1 mt-1 border-top border-secondary">
+            <span>Consigue monedas realizando las tareas diarias o comprandolas en la tienda. Usa las monedas para comprar medallas, estampas y @tokiski.</span>
+          </div>
+        </div>
+
+        <h4 class="mt-3">Oferta de monedas:</h4>
+        <div class="d-flex flex-column justify-content-center align-items-center border border-light mt-1 p-2">
+          <div class="d-flex flex-row flex-wrap justify-content-center align-items-center border-bottom border-secondary pb-2" id="monedaOfertas"></div>
+          <span>*Sólo se admiten pagos por PayPal*</span>
+          <span>*No se admiten devoluciones*</span>
+        </div>
+
+        <h4 class="mt-3">Comprar un @tokiski:</h4>
+        <div class="d-flex flex-column justify-content-center align-items-center border border-light mt-1 p-1">
+          <div class="d-flex flex-row flex-wrap justify-content-center align-items-center border-bottom border-secondary pb-2">
+            <button type="button" class="btn btn-secondary d-flex flex-column justify-content-center align-items-center mt-2" id="comprarTokiski">
+              <div class="d-flex flex-row justify-content-center align-items-center">
+                  <i class="fas fa-broadcast-tower fs-4 me-1"></i>
+                  <span class="fas fs-5 ms-1">1 @tokiski</span>
+              </div>
+              <div class="d-flex flex-row justify-content-center align-items-center mt-2">
+                <i class="icon-moneda fs-4 me-1"></i>
+                <span class="fas fs-5 ms-1">3000 monedas</span>
+            </div>
+          </button>
+          </div>
+          <span>Los mensajes que contienen un @tokiski le llegan a todos los usuarios de la plataforma.</span>
+          <span>*No se admiten devoluciones*</span>
+        </div>
+
+        <h4 class="mt-3">Usar código de monedas:</h4>
+        <div class="d-flex flex-column justify-content-center align-items-center border border-light mt-1 p-2">
+          <div class="mb-2">
+            <label for="codigoPromocional" class="form-label">Código promocional</label>
+            <input type="text" class="form-control text-center" id="codigoPromocional">
+          </div>
+          <button type="button" class="btn btn-primary" id="codigoBtn">
+            <div class="spinner-border spinner-border-sm text-light visually-hidden" role="status" id="codigoBtnSpinner"></div>
+            <span>Usar</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script src="libs/bootstrap-modal-shake.js"></script>
+  <script type="module">
+    import API from "./libs/api.js";
+    import HELPEX from "./libs/helpex.js";
+    import CompLoader from "./libs/compLoader.js";
+    import SocialDrawer from "./libs/socialDrawer.js";
+    import PostComposer from "./libs/postComposer.js";
+
+    API.getUser().then(user => window.user = user.id).catch(() => location.href="login.html");
+    SocialDrawer.loadHotKeys(document.getElementById("hotKeysDiv"));
+
+    let balanceDiv = document.getElementById("balanceDiv");
+    API.getUser()
+    .then(user => {
+      let profilePic = document.getElementById("profilePic");
+      profilePic.style.cursor = "pointer";
+      profilePic.onclick = () => location.href = "user.html?sid="+user.usuario;
+      profilePic.src = user.profilePic;
+
+      SocialDrawer.drawBalance(user, balanceDiv);
+    })
+    .catch(error => HELPEX.showMSG("Error al cargar inicio", "Se ha producido un error al cargar la página de inicio", error));
+    
+    let monedaOfertas = document.getElementById("monedaOfertas");
+    monedaOfertas.appendChild(SocialDrawer.drawBuyCoins(1));
+    monedaOfertas.appendChild(SocialDrawer.drawBuyCoins(3));
+    monedaOfertas.appendChild(SocialDrawer.drawBuyCoins(5));
+    monedaOfertas.appendChild(SocialDrawer.drawBuyCoins(10));
+    monedaOfertas.appendChild(SocialDrawer.drawBuyCoins(20));
+    monedaOfertas.appendChild(SocialDrawer.drawBuyCoins(30));
+
+    let comprarTokiski = document.getElementById("comprarTokiski");
+    comprarTokiski.addEventListener("click", () => {
+      HELPEX.showConf("Comprar @tokiski", "Confirma que deseas gastar 3000 monedas en 1 @tokiski.")
+      .then(() => {
+        API.comprarTokiski()
+        .then(() => {
+          API.getUser()
+          .then(user => {
+            HELPEX.removeAllChilds(balanceDiv);
+            SocialDrawer.drawBalance(user, balanceDiv);
+          })
+          .catch(HELPEX.generalUnespectedError);
+        })
+        .catch(error => HELPEX.showMSG("Error al comprar @tokiski", "No se ha podido comprar el @tokiski", error));
+      })
+      .catch(() => {});
+    });
+
+    let codigoBtn = document.getElementById("codigoBtn");
+    let codigoBtnSpinner = document.getElementById("codigoBtnSpinner");
+    let codigoPromocional = document.getElementById("codigoPromocional");
+    codigoBtn.addEventListener("click", () => {
+      codigoBtnSpinner.classList.remove("visually-hidden");
+      codigoBtn.disabled = true;
+      API.useCodigoMoneda(codigoPromocional.value)
+      .then(valor => {
+        codigoBtnSpinner.classList.add("visually-hidden");
+        codigoBtn.disabled = false;
+        HELPEX.showMSG("Codigo promocional usado", `Se han agregado ${valor} monedas a tu cuenta.`);
+        API.getUser()
+          .then(user => {
+            HELPEX.removeAllChilds(balanceDiv);
+            SocialDrawer.drawBalance(user, balanceDiv);
+          })
+          .catch(HELPEX.generalUnespectedError);
+      })
+      .catch(error => {
+        codigoBtnSpinner.classList.add("visually-hidden");
+        codigoBtn.disabled = false;
+        HELPEX.showMSG("Error al usar código moneda", "No se ha podido usar el código moneda", error)
+      });
+      codigoPromocional.value = "";
+    });
+
+    let status = HELPEX.sGet("status");
+    let msg = HELPEX.sGet("msg");
+    if(status !== null){
+      HELPEX.setPreloadAction(() => {
+        if(status == "success")
+          HELPEX.showMSG("Compra completa", `Has comprado ${msg*100} monedas. :)`);
+        else if(status == "error")
+          HELPEX.showMSG("Error en la compra", "No se ha podido completar la compra.", msg);
+      });
+    }
+
+  </script>
+</body>
+
+</html>

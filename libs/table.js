@@ -2,7 +2,7 @@ import API from "./api.js";
 import HELPEX from "./helpex.js";
 
 const FILTER_TYPES = {
-    TEXT: 1, NUMBER: 2, DATE: 3, SELECT: 4
+    TEXT: 1, NUMBER: 2, DATE: 3, SELECT: 4, INTERVAL: 5
 }
 const MAX_PER_PAGE = 10;
 
@@ -61,8 +61,7 @@ function drawTableData(page = 0){
         columnsData.forEach(column => {
             let tdElement = document.createElement("td");
             if(column.id instanceof Object){
-                tdElement.classList.add("d-flex");
-                tdElement.classList.add("justify-content-end");
+                tdElement.classList.add("text-end");
                 tdElement.classList.add("mr-3");
                 let buttonGroupDiv = document.createElement("div");
                 buttonGroupDiv.classList.add("dropdown");
@@ -103,10 +102,17 @@ function drawTableData(page = 0){
                     cellDat = e[column.id];
                 }
                 if(cellDat !== null){
-                    if(column.formatter === undefined){
-                        tdElement.innerText = cellDat;
+                    if(column.formatter !== undefined){
+                        cellDat = column.formatter(cellDat);
+                    }
+
+                    if(column.isImage === true){
+                        let img = document.createElement("img");
+                        if(column.classes !== undefined) HELPEX.addClases(img, column.classes);
+                        img.src = cellDat;
+                        tdElement.appendChild(img);
                     }else{
-                        tdElement.innerText = column.formatter(cellDat);
+                        tdElement.innerText = cellDat;
                     }
                 }
             }
@@ -164,6 +170,93 @@ function makeNavegButton(content, page, outline = true){
     return button;
 }
 
+function createFilters(filters, filterDiv, setFunction){
+    filters.forEach(filter => {
+        let col = document.createElement("div");
+        let disablerControl = document.createElement("div");
+        let disablerInput = document.createElement("input");
+        let disablerLabel = document.createElement("label");
+        let filterInput;
+
+        col.classList.add("col-12");
+        col.classList.add("mt-1");
+        col.classList.add("col-md-"+(filter.size===undefined?4:filter.size));
+
+        disablerControl.classList.add("custom-control");
+        disablerControl.classList.add("custom-switch");
+        disablerControl.classList.add("mb-1");
+
+        switch(filter.type){
+            case FILTER_TYPES.TEXT:
+                filterInput = document.createElement("input");
+                filterInput.classList.add("form-control");
+                filterInput.type = "text";
+            break;
+            case FILTER_TYPES.NUMBER:
+                filterInput = document.createElement("input");
+                filterInput.classList.add("form-control");
+                filterInput.type = "number";
+                if(filter.max !== undefined)
+                    filterInput.max = filter.max;
+                if(filter.min !== undefined)
+                    filterInput.min = filter.min;
+            break;
+            case FILTER_TYPES.DATE:
+                filterInput = document.createElement("input");
+                filterInput.classList.add("form-control");
+                filterInput.type = "date";
+            break;
+            case FILTER_TYPES.SELECT:
+                filterInput = document.createElement("select");
+                filterInput.classList.add("form-select");
+                fillSelect(filterInput, filter.options)
+            break;
+            case FILTER_TYPES.INTERVAL:
+                filterInput = document.createElement("select");
+                filterInput.classList.add("form-select");
+                fillSelect(filterInput, [{value: "year", name: "Anual"}, {value: "month", name: "Mensual"}, {value: "week", name: "Semanal"}, {value: "day", name: "Diario"}])
+            break;
+        }
+        filterInput.addEventListener("change", () => {
+            disablerInput.checked = true;
+            setFunction(filterInput.value, filter.id);
+        });
+
+        disablerInput.type = "checkbox";
+        disablerInput.classList.add("form-check-input");
+        disablerInput.id = "filter" + filter.id;
+        disablerInput.addEventListener("change", () => {
+            if(disablerInput.checked){
+                filterInput.disabled = false;
+                filterInput.classList.remove("disabled");
+                setFunction(filterInput.value, filter.id);
+            }else{
+                filterInput.disabled = true;
+                filterInput.classList.add("disabled");
+                setFunction(null, filter.id);
+            }
+        });
+        disablerInput.dispatchEvent(new Event('change'));
+
+        disablerLabel.classList.add("form-check-label");
+        disablerLabel.classList.add("ms-1");
+        disablerLabel.htmlFor  = "filter" + filter.id;
+        disablerLabel.innerText = "Filtrar por "+filter.name;
+
+        disablerControl.appendChild(disablerInput);
+        disablerControl.appendChild(disablerLabel);
+        col.appendChild(disablerControl);
+        col.appendChild(filterInput);
+        filterDiv.appendChild(col);
+    });
+}
+
+export const INTERNAL = {
+    fillSelect,
+    createFilters,
+    FILTER_TYPES
+};
+
 export default {
     FILTER: FILTER_TYPES,
     reloadTable,
@@ -178,80 +271,9 @@ export default {
         filterDiv.classList.add("mt-1");
         filterDiv.classList.add("align-items-end");
 
-        filters.forEach(filter => {
-            let col = document.createElement("div");
-            let disablerControl = document.createElement("div");
-            let disablerInput = document.createElement("input");
-            let disablerLabel = document.createElement("label");
-            let filterInput;
-
-            col.classList.add("col-12");
-            col.classList.add("mt-1");
-            col.classList.add("col-md-"+(filter.size===undefined?4:filter.size));
-
-            disablerControl.classList.add("custom-control");
-            disablerControl.classList.add("custom-switch");
-            disablerControl.classList.add("mb-1");
-
-            switch(filter.type){
-                case FILTER_TYPES.TEXT:
-                    filterInput = document.createElement("input");
-                    filterInput.classList.add("form-control");
-                    filterInput.type = "text";
-                break;
-                case FILTER_TYPES.NUMBER:
-                    filterInput = document.createElement("input");
-                    filterInput.classList.add("form-control");
-                    filterInput.type = "number";
-                    if(filter.max !== undefined)
-                        filterInput.max = filter.max;
-                    if(filter.min !== undefined)
-                        filterInput.min = filter.min;
-                break;
-                case FILTER_TYPES.DATE:
-                    filterInput = document.createElement("input");
-                    filterInput.classList.add("form-control");
-                    filterInput.type = "date";
-                break;
-                case FILTER_TYPES.SELECT:
-                    filterInput = document.createElement("select");
-                    filterInput.classList.add("form-select");
-                    fillSelect(filterInput, filter.options)
-                break;
-            }
-            filterInput.addEventListener("change", () => {
-                disablerInput.checked = true;
-                filterData[filter.id] = filterInput.value;
-                reloadTable();
-            });
-
-            disablerInput.type = "checkbox";
-            disablerInput.classList.add("form-check-input");
-            disablerInput.id = "filter" + filter.id;
-            disablerInput.addEventListener("change", () => {
-                if(disablerInput.checked){
-                    filterInput.disabled = false;
-                    filterInput.classList.remove("disabled");
-                    filterData[filter.id] = filterInput.value;
-                }else{
-                    filterInput.disabled = true;
-                    filterInput.classList.add("disabled");
-                    filterData[filter.id] = null;
-                }
-                reloadTable();
-            });
-            disablerInput.dispatchEvent(new Event('change'));
-
-            disablerLabel.classList.add("form-check-label");
-            disablerLabel.classList.add("ms-1");
-            disablerLabel.htmlFor  = "filter" + filter.id;
-            disablerLabel.innerText = "Filtrar por "+filter.name;
-
-            disablerControl.appendChild(disablerInput);
-            disablerControl.appendChild(disablerLabel);
-            col.appendChild(disablerControl);
-            col.appendChild(filterInput);
-            filterDiv.appendChild(col);
+        createFilters(filters, filterDiv, (val, id) => {
+            filterData[id] = val;
+            reloadTable();
         });
         containerDiv.appendChild(filterDiv);
 

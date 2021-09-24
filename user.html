@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="libs/bootstrap-modal-shake.css" />
   <script src="https://kit.fontawesome.com/3afa5832cf.js" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="libs/commons.css" />
+  <link rel="stylesheet" href="font/style.css">
 </head>
 
 <body class="bg-dark text-light">
@@ -45,9 +46,9 @@
               <span></span>
             </div>
           </div>
+          <div class="d-flex flex-row flex-wrap justify-content-center align-items-start mt-1 pt-2 border-top border-secondary" id="userMedallas"></div>
           <div class="d-flex border-top border-secondary visually-hidden px-3 mt-1" id="profileDataDescripcion"></div>
-          <div
-            class="d-flex flex-row flex-wrap justify-content-around align-items-center border-top border-secondary px-3 mt-1 pt-1">
+          <div  class="d-flex flex-row flex-wrap justify-content-around align-items-center border-top border-secondary px-3 mt-1 pt-1" id="countersDiv">
             <button type="button" class="btn btn-sm btn-secondary" id="contadorAcechadores"></button>
             <button type="button" class="btn btn-sm btn-secondary" id="contadorAcechados"></button>
             <button type="button" class="btn btn-outline-info" id="acecharBtn"><i class="fas fa-binoculars me-1"></i>
@@ -95,9 +96,7 @@
       </div>
       <!-- Columna de desafios diarios -->
       <div class="col-4 d-none d-lg-block">
-        <div class="d-flex border border-light m-1">
-          Tareas diarias
-        </div>
+        <div class="d-flex flex-column justify-content-center align-items-stretch p-1 border border-light mt-1" id="tareasDiarias"></div>
       </div>
     </div>
   </div>
@@ -115,12 +114,12 @@
 
     API.getUser().then(user => window.user = user.id).catch(() => location.href = "login.html");
     SocialDrawer.loadHotKeys(document.getElementById("hotKeysDiv"));
+    let tareasDiarias = document.getElementById("tareasDiarias");
 
-    var cUser;
-    API.getUserData("@" + HELPEX.sGet("sid"))
+    var cUser = null;
+    function refreshUserData(){
+      API.getUserData("@" + HELPEX.sGet("sid"))
       .then(user => {
-        cUser = user.id;
-
         document.getElementById("profilePic").src = user.profilePic;
         document.getElementById("profileName").innerText = user.nombre;
         document.getElementById("profileUser").innerText = `(@${user.usuario})`;
@@ -151,60 +150,80 @@
           profileDataDescripcion.innerHTML = user.descripcion;
         }
 
+        var userMedallas = document.getElementById("userMedallas");
+        HELPEX.removeAllChilds(userMedallas);
+        if(user.medallas.length > 0){
+          user.medallas.forEach(medalla => {
+            let img = HELPEX.createElement("img", "medalla mx-2");
+            img.src = medalla;
+            userMedallas.appendChild(img);
+          })
+        }else userMedallas.classList.add("visually-hidden");
+
         var contadorAcechadores = document.getElementById("contadorAcechadores");
         var contadorAcechados = document.getElementById("contadorAcechados");
         contadorAcechadores.innerText = user.acechadores + " Acechadores";
         contadorAcechadores.addEventListener("click", () => {
-          SocialDrawer.displayList(API.getAcechadores(cUser), "Acechadores");
+          SocialDrawer.displayList(API.getAcechadores(user.id), "Acechadores");
         });
         contadorAcechados.innerText = "Acechando " + user.acechados;
         contadorAcechados.addEventListener("click", () => {
-          SocialDrawer.displayList(API.getAcechados(cUser), "Acechados");
+          SocialDrawer.displayList(API.getAcechados(user.id), "Acechados");
         });
 
         var acecharBtn = document.getElementById("acecharBtn");
-        API.getAcechados()
-          .then(acechados => {
-            if (HELPEX.arrayDisect(acechados, "id").includes(cUser)) {
-              acecharBtn.classList.remove("btn-outline-info");
-              acecharBtn.classList.add("btn-outline-warning");
-              acecharBtn.lastElementChild.innerText = "Dejar de seguir";
-            }
-          })
-          .catch(HELPEX.generalUnespectedError);
-        acecharBtn.addEventListener("click", () => {
-          acecharBtn.disabled = true;
-          acecharBtn.firstElementChild.classList.remove("fa-binoculars");
-          acecharBtn.firstElementChild.classList.remove("fa-ban");
-          acecharBtn.firstElementChild.classList.add("fa-sync-alt");
-          acecharBtn.firstElementChild.classList.add("fa-spin");
-          API.doAcechar(cUser)
-            .then((acechado) => {
-              acecharBtn.disabled = false;
-              acecharBtn.firstElementChild.classList.remove("fa-sync-alt");
-              acecharBtn.firstElementChild.classList.remove("fa-spin");
-              if (acechado) {
+        if(user.monedas === undefined){
+          API.getAcechados()
+            .then(acechados => {
+              if (HELPEX.arrayDisect(acechados, "id").includes(user.id)) {
                 acecharBtn.classList.remove("btn-outline-info");
                 acecharBtn.classList.add("btn-outline-warning");
-                acecharBtn.lastElementChild.innerText = "Dejar de acechar";
-                contadorAcechadores.innerText = (user.acechadores - -1) + " Acechadores";
-                acecharBtn.firstElementChild.classList.add("fa-ban");
-              } else {
-                acecharBtn.classList.add("btn-outline-info");
-                acecharBtn.classList.remove("btn-outline-warning");
-                acecharBtn.lastElementChild.innerText = "Acechar";
-                contadorAcechadores.innerText = (user.acechadores - 1) + " Acechadores";
-                acecharBtn.firstElementChild.classList.add("fa-binoculars");
-                acecharBtn.firstElementChild.classList.remove("fa-ban");
+                acecharBtn.lastElementChild.innerText = "Dejar de seguir";
               }
             })
             .catch(HELPEX.generalUnespectedError);
-        });
+          acecharBtn.addEventListener("click", () => {
+            acecharBtn.disabled = true;
+            acecharBtn.firstElementChild.classList.remove("fa-binoculars");
+            acecharBtn.firstElementChild.classList.remove("fa-ban");
+            acecharBtn.firstElementChild.classList.add("fa-sync-alt");
+            acecharBtn.firstElementChild.classList.add("fa-spin");
+            API.doAcechar(user.id)
+              .then((acechado) => {
+                acecharBtn.disabled = false;
+                acecharBtn.firstElementChild.classList.remove("fa-sync-alt");
+                acecharBtn.firstElementChild.classList.remove("fa-spin");
+                if (acechado) {
+                  acecharBtn.classList.remove("btn-outline-info");
+                  acecharBtn.classList.add("btn-outline-warning");
+                  acecharBtn.lastElementChild.innerText = "Dejar de acechar";
+                  contadorAcechadores.innerText = (user.acechadores - -1) + " Acechadores";
+                  acecharBtn.firstElementChild.classList.add("fa-ban");
+                } else {
+                  acecharBtn.classList.add("btn-outline-info");
+                  acecharBtn.classList.remove("btn-outline-warning");
+                  acecharBtn.lastElementChild.innerText = "Acechar";
+                  contadorAcechadores.innerText = (user.acechadores - 1) + " Acechadores";
+                  acecharBtn.firstElementChild.classList.add("fa-binoculars");
+                  acecharBtn.firstElementChild.classList.remove("fa-ban");
+                }
+              })
+              .catch(HELPEX.generalUnespectedError);
+          });
+        }else{
+          acecharBtn.classList.add("visually-hidden");
+          SocialDrawer.drawBalance(user, document.getElementById("countersDiv"), 6);
+        }
 
-        feedLoading = false;
-        fetchFeed();
+        if(cUser === null){
+          cUser = user.id;
+          feedLoading = false;
+          refreshFeed(true);
+        }
       })
       .catch(error => HELPEX.showMSG("Error al cargar inicio", "Se ha producido un error al cargar la página de inicio", error));
+    }
+    refreshUserData();
 
 
     var tabPublicaciones = document.getElementById("tabPublicaciones");
@@ -304,11 +323,15 @@
           .catch(error => HELPEX.showMSG("Error al cargar feed", "Se ha producido un error inesperado al cargar el feed", error));
       }
     }
-    function refreshFeed() {
+    function refreshFeed(skipUser = false) {
       HELPEX.removeAllChilds(feedDiv);
       feedLoaded = 0;
       feedLoading = false;
       fetchFeed();
+
+      if(!skipUser) refreshUserData();
+
+      API.getTareasDiarias().then(tareas => SocialDrawer.loadTareasDiarias(tareas, tareasDiarias)).catch(HELPEX.generalUnespectedError);
     }
     $(window).scroll(() => {
       if ($(window).scrollTop() + $(window).height() >= $("#feedDiv").height()) fetchFeed();

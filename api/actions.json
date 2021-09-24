@@ -14,6 +14,10 @@
     "getFeed": 1,
     "getAcechados": 1,
     "getAcechadores": 1,
+    "getNotificaciones": 1,
+    "getTareasDiarias": 1,
+    "getTipoMedallasUser": 1,
+    "getMedallas": 1,
 
     "updateUserData": 1,
     "deleteProfilePic": 1,
@@ -22,12 +26,17 @@
     "doFavorito": 1,
     "doVociferar": 1,
     "doAcechar": 1,
+    "darMedalla": 1,
+    "apropiarMedalla": 1,
 
     "getEstados": 1,
     "getSexos": 1,
     
     "useCodigoMoneda": 1,
     "comprarTokiski": 1,
+    "comprarModenas": 1,
+    "cobrarTareaDiaria": 1,
+    "comprarMedalla": 1,
 
     "getAdminIndexInfo": 2,
     "createCodigoMoneda": 2,
@@ -38,6 +47,10 @@
     "createSexo": 2,
     "deleteSexo": 2,
     "editSexo": 2,
+    "deleteTipoMedalla": 2,
 
-    "getCodigoMonedas": 2
+    "getCodigoMonedas": 2,
+    "getCompras": 2,
+    "getEstadisticaUsuariosActivos": 2,
+    "getTipoMedallas": 2
 }

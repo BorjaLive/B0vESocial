@@ -140,7 +140,7 @@
         });
         if(user.estado != null) datoEstado.value = user.estado;
       }).catch(HELPEX.generalUnespectedError);
-      if(user.descripcion != null) datoNacimiento.value = user.descripcion;
+      if(user.descripcion != null) datoDescripcion.value = user.descripcion;
     })
     .catch(error => HELPEX.showMSG("Error al cargar datos de usuario", "Se ha producido un error al cargar los datos de usuario", error));
 

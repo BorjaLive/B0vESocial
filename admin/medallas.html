@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>B0vE Social</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="../libs/bootstrap-modal-shake.css">
+    <script src="https://kit.fontawesome.com/3afa5832cf.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="../libs/commons.css">
+</head>
+
+<body>
+    
+    <div id="header"></div>
+
+    <div class="container">
+        <div class="d-flex justify-content-start mt-2">
+            <button type="button" class="btn btn-outline-primary" id="createBTN">Crear medalla</button>
+        </div>
+        <div id="tableDiv" class="mt-2"></div>
+    </div>
+
+    <div class="modal fade" tabindex="-1" id="createModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Crear medalla</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="createNombre" class="form-label">Nombre de la medalla</label>
+                        <input type="text" class="form-control" id="createNombre">
+                    </div>
+                    <div class="mb-3">
+                        <label for="createPrecio" class="form-label">Precio</label>
+                        <input type="number" class="form-control" id="createPrecio">
+                    </div>
+                    <div class="input-group mb-3">
+                        <label class="input-group-text" for="createFile">Upload</label>
+                        <input type="file" class="form-control" id="createFile">
+                      </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="createDoBTN">
+                        <div class="spinner-border spinner-border-sm text-light visually-hidden" role="status" id="createLoader"></div>
+                        Crear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="../libs/bootstrap-modal-shake.js"></script>
+    <script type="module">
+        import API from '../libs/api.js';
+        import HELPEX from '../libs/helpex.js';
+        import CompLoader from '../libs/compLoader.js';
+        import TABLE from '../libs/table.js';
+
+        HELPEX.requireAdmin();
+        CompLoader.loadComp("adminHeader", "header")
+        .then(() => {
+            document.getElementById("medallasTab").classList.add("active");
+            document.getElementById("logOutBTN").addEventListener("click", HELPEX.logOutAdmin);
+        });
+
+        var createBTN = document.getElementById("createBTN");
+
+        var createModalEl = document.getElementById('createModal');
+        var createModal = new bootstrap.Modal(createModalEl, { backdrop: "static", focus: true, keyboard: false });
+        var createNombreInput = document.getElementById("createNombre");
+        var createFileInput = document.getElementById("createFile");
+        var createPrecioInput = document.getElementById("createPrecio");
+        var createDoBTN = document.getElementById("createDoBTN");
+        var createLoader = document.getElementById("createLoader");
+
+        createBTN.addEventListener("click", () => {
+            createNombreInput.value = "";
+            createDoBTN.disabled = false;
+            createLoader.classList.add("visually-hidden");
+            createModal.show();
+        });
+
+        createDoBTN.addEventListener("click", () =>{
+            createDoBTN.disabled = true;
+            createLoader.classList.remove("visually-hidden");
+            API.createTipoMedalla(createNombreInput.value, createPrecioInput.value, createFileInput.files[0], null)
+            .then(() => {
+                createModal.hide();
+                TABLE.reloadTable();
+            })
+            .catch(error => HELPEX.showMSG("Error al crear medalla", "No se han podido crear el medalla", error));
+        });
+        TABLE.initializeTable([
+            {
+                name: "Icono",
+                id: "icon",
+                isImage: true,
+                classes: "medalla"
+            },
+            {
+                name: "Nombre",
+                id: "nombre"
+            },
+            {
+                name: "Precio",
+                id: "precio"
+            },
+            {
+                name: "",
+                id: {
+                    name: "Acciones",
+                    actions: [
+                        {
+                            name: "Eliminar",
+                            code: e => {
+                                API.deleteTipoMedalla(e.id)
+                                .then(() => TABLE.reloadTable())
+                                .catch(error => HELPEX.showMSG("Error al eliminar medalla", "No se ha podido eliminar el medalla", error))
+                            }
+                        }
+                    ]
+                }
+            }
+        ], [], "tableDiv", "getTipoMedallas");
+
+    </script>
+</body>
+
+</html>

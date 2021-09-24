@@ -11,6 +11,8 @@ String.prototype.search = function(pat, n = 1) {
     return i;
 }
 
+var preloadAction = null;
+
 var msgModal, msgTitle, msgBody, msgTextarea;
 var confModal, confTitle, confBody, confCancelBTN, confBTN, confSpinner;
 var selModal;
@@ -37,32 +39,55 @@ CompLoader.loadComp("helpexModals", modalsDiv)
     multiSelModal = document.getElementById("multiSelModal");
 
     globalWaiting = document.getElementById("globalWaiting");
+
+    if(preloadAction !== null){
+        preloadAction();
+        preloadAction = null;
+    }
 });
 
 function showMSG(titulo, cuerpo, log = null){
-    msgTitle.innerText = titulo;
-    msgBody.innerText = cuerpo;
-    if(log === null){
-        msgTextarea.classList.add("visually-hidden");
-    }else{
+    try{
+        msgTitle.innerText = titulo;
+        msgBody.innerText = cuerpo;
+        if(log === null){
+            msgTextarea.classList.add("visually-hidden");
+        }else{
+            console.log(log);
+            msgTextarea.value = log;
+            msgTextarea.classList.remove("visually-hidden");
+        }
+        hideAllModals(null, msgModal);
+    }catch(e){
+        console.log(e);
         console.log(log);
-        msgTextarea.value = log;
-        msgTextarea.classList.remove("visually-hidden");
     }
-    hideAllModals(null, msgModal);
 }
-function globalLoaderShow(){
+function globalLoaderShow(text = null){
+    if(text === null){
+        globalWaiting.firstElementChild.classList.add("visually-hidden");
+    }else{
+        globalWaiting.firstElementChild.classList.remove("visually-hidden");
+        globalWaiting.firstElementChild.innerText = text;
+    }
     globalWaiting.classList.remove("visually-hidden");
 }
 function globalLoaderHide(){
     globalWaiting.classList.add("visually-hidden");
 }
 function hideAllModals(except = null, open = null){
-    globalLoaderShow();
     if(except !== null && except instanceof Element)
         except = except.id;
     if(open !== null && !(open instanceof Element))
         open = document.getElementById("open");
+    
+    let timeout;
+    if(document.querySelector(".modal.show") === null){
+        timeout = 1;
+    }else{
+        timeout = 500;
+        globalLoaderShow();
+    }
     setTimeout(() => {
         globalLoaderHide();
         let modals = document.getElementsByClassName("modal");
@@ -83,10 +108,22 @@ function hideAllModals(except = null, open = null){
                 }
             });
         }
-    }, 500);
+    }, timeout);
 }
 
 let meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+function addClases (element, clases) {
+    clases.split(" ").forEach(clas => {
+        element.classList.add(clas);
+    });
+}
+function createElement (type, clases = null, text = null) {
+    let e = document.createElement(type);
+    if(clases !== null) addClases(e, clases);
+    if(text !== null) e.innerText = text;
+    return e;
+}
 
 export default {
     requireAdmin: () => {
@@ -139,11 +176,10 @@ export default {
     removeAllChilds: element => {
         while (element.firstChild) element.removeChild(element.lastChild)
     },
-    addClases: (element, calses) => {
-        calses.split(" ").forEach(clas => {
-            element.classList.add(clas);
-        })
-    },
+    addClases,
+    createElement,
+    globalLoaderShow,
+    globalLoaderHide,
     sGet: (parameterName) =>{
         var result = null, tmp = [];
         location.search
@@ -155,7 +191,7 @@ export default {
             });
         return result;
     },
-    getLocationFileName: (parameterName) =>{
+    getLocationFileName: () =>{
         return location.pathname.split("/").pop().split(".").shift();
     },
     createSelectOption: (value, text) => {
@@ -172,6 +208,7 @@ export default {
         });
         return res;
     },
+    selectRandom: (array) => array[Math.floor(Math.random() * array.length)],
     sendClick: (element, event = "click") => {
         element.dispatchEvent(new Event(event));
     },
@@ -206,5 +243,6 @@ export default {
             }
         }
         return null;
-    }
+    },
+    setPreloadAction: preload => preloadAction = preload 
 }

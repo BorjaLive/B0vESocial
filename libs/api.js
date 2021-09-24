@@ -148,6 +148,18 @@ export default {
         action: "getAcechadores",
         id
     }),
+    getNotificaciones:() => fetchAPI({
+        action: "getNotificaciones"
+    }),
+    getTareasDiarias: () => fetchAPI({
+        action: "getTareasDiarias"
+    }),
+    getTipoMedallas: () => fetchAPI({
+        action: "getTipoMedallasUser"
+    }),
+    getMedallas: () => fetchAPI({
+        action: "getMedallas"
+    }),
 
     updateUserData: (nombre, nacimiento, sexo, estado, descripcion) => fetchAPI({
         action: "updateUserData",
@@ -173,6 +185,15 @@ export default {
         action: "doAcechar",
         usuario
     }),
+    darMedalla: (id, post) => fetchAPI({
+        action: "darMedalla",
+        id, post
+    }),
+    apropiarMedalla: (id) => fetchAPI({
+        action: "apropiarMedalla",
+        id
+    }),
+
 
     getEstados: () => fetchAPI({
         action: "getEstados"
@@ -187,6 +208,18 @@ export default {
     }),
     comprarTokiski: () => fetchAPI({
         action: "comprarTokiski"
+    }),
+    comprarModenas: (euros) => fetchAPI({
+        action: "comprarModenas",
+        euros
+    }),
+    cobrarTareaDiaria: (tipo = null) => fetchAPI({
+        action: "cobrarTareaDiaria",
+        tipo
+    }),
+    comprarMedalla: (id) => fetchAPI({
+        action: "comprarMedalla",
+        id
     }),
 
     getAdminIndexInfo: () => fetchAPI({
@@ -224,6 +257,10 @@ export default {
         action: "editSexo",
         sexo, nuevo
     }),
+    deleteTipoMedalla: (id) => fetchAPI({
+        action: "deleteTipoMedalla",
+        id
+    }),
 
 
     changeProfilePic: (processCallback, file) => fetchFileAPI({
@@ -241,5 +278,10 @@ export default {
     createPostVideo: (texto, file, processCallback, padre = null) => fetchFileAPI({
         action: "createPostVideo",
         file, texto, padre
+    }, processCallback),
+
+    createTipoMedalla: (nombre, precio, file, processCallback) => fetchFileAPI({
+        action: "createTipoMedalla",
+        file, nombre, precio
     }, processCallback)
 }

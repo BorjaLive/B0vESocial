@@ -21,6 +21,7 @@
                     <img class="rounded align-self-center visually-hidden" style="width: 80%;" id="postModalImage">
                     <video controls class="rounded align-self-center visually-hidden" style="width: 80%;" id="postModalVideo"></video>
                     <span class="align-self-end mt-2" id="postModalFecha"></span>
+                    <div class="d-flex flex-row flex-wrap justify-content-center align-items-start mt-1 pt-2 border-top border-secondary" id="postModalMedallas"></div>
                     <div class="d-flex flex-row flex-wrap justify-content-around align-items-start mt-1 pt-3 border-top border-secondary">
                         <div class="d-flex flex-column jusfity-content-start align-items-center">
                             <button class="btn btn-outline-secondary" type="button" title="Vociferar" id="postModalVociferarBtn">
@@ -76,3 +77,14 @@
     </div>
 </div>
 
+<div id="medallaListModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content bg-dark">
+            <div class="modal-header">
+                <h5 class="modal-title">Tus medallas</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body d-flex flex-row flex-wrap justify-content-center align-items-start" id="medallaListModalBody"></div>
+        </div>
+    </div>
+</div>

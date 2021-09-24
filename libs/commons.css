@@ -24,6 +24,16 @@
     border-radius: 50%!important;
 }
 
+.medalla{
+    height: 4rem;
+    width: 4rem;
+    transition: transform .2s;
+}
+.medalla:hover {
+    transform: scale(2);
+}
+  
+
 .progressBar {
     width: 100%;
     background-color: grey;

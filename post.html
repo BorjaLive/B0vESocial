@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="libs/bootstrap-modal-shake.css" />
   <script src="https://kit.fontawesome.com/3afa5832cf.js" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="libs/commons.css" />
+  <link rel="stylesheet" href="font/style.css">
 </head>
 
 <body class="bg-dark text-light">
@@ -47,6 +48,7 @@
           <video controls class="rounded align-self-center visually-hidden" style="width: 80%;"
             id="postPageVideo"></video>
           <span class="text-end mt-2" id="postPageFecha"></span>
+          <div class="d-flex flex-row flex-wrap justify-content-center align-items-start mt-1 pt-2 border-top border-secondary" id="postPageMedallas"></div>
           <div
             class="d-flex flex-row flex-wrap justify-content-around align-items-start mt-1 pt-3 border-top border-secondary">
             <div class="d-flex flex-column jusfity-content-start align-items-center">
@@ -92,9 +94,7 @@
       </div>
       <!-- Columna de desafios diarios -->
       <div class="col-4 d-none d-lg-block">
-        <div class="d-flex border border-light m-1">
-          Tareas diarias
-        </div>
+        <div class="d-flex flex-column justify-content-center align-items-stretch p-1 border border-light mt-1" id="tareasDiarias"></div>
       </div>
     </div>
   </div>
@@ -113,6 +113,7 @@
 
     API.getUser().then(user => window.user = user.id).catch(() => location.href = "login.html");
     SocialDrawer.loadHotKeys(document.getElementById("hotKeysDiv"));
+    let tareasDiarias = document.getElementById("tareasDiarias");
     
     var elems = {};
     SocialDrawer.pModalElements.forEach(e => elems[e] = document.getElementById("postPage" + e));
@@ -120,12 +121,13 @@
 
     var cPost = HELPEX.sGet("id");
     function loadPost() {
+      console.log("Reload");
       API.getPost(cPost, true)
         .then(post => {
           SocialDrawer.openPost(post, elems, loadPost);
         })
-        .catch(HELPEX.generalUnespectedError)
-      //.catch(() => location.href = "index.html");
+        .catch(HELPEX.generalUnespectedError);
+      API.getTareasDiarias().then(tareas => SocialDrawer.loadTareasDiarias(tareas, tareasDiarias)).catch(HELPEX.generalUnespectedError);
     }
     loadPost();
     PostComposer.iniPostComposer("postComposer", loadPost, cPost);

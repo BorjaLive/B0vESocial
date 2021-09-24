@@ -12,6 +12,9 @@
     define("MAIL_FROM_PASS", "");
     define("MAIL_ADMIN", "");
 
+    define("PAYPAL_CLIENT_ID", "");
+    define("PAYPAL_CLIENT_SECRET", "");
+
     define("ADMIN_CODE", "");
 
     define("EXTERNAL_URL", "http://localhost/B0veSocial/");

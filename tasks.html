@@ -27,17 +27,12 @@
     <!-- Cuerpo -->
     <div class="row">
       <!-- Columna de atajos -->
-      <div class="col-12 col-xl-1 col-xxl-1">
+      <div class="col-12 col-xl-1">
         <div class="d-flex flex-row flex-wrap justify-content-around align-items-center border border-light my-1" id="hotKeysDiv"></div>
       </div>
-      <!-- Columna escritura y feed -->
-      <div class="col-12 col-xl-7">
-        <div class="d-flex flex-column border border-light p-2 my-1 justify-content-between align-items-stretch" id="postComposer"></div>
-        <div class="d-flex flex-column border border-light p-2 my-1 justify-content-between align-items-stretch" id="feedDiv"></div>
-      </div>
       <!-- Columna de desafios diarios -->
-      <div class="col-4 d-none d-lg-block">
-        <div class="d-flex flex-column justify-content-center align-items-stretch p-1 border border-light mt-1" id="tareasDiarias"></div>
+      <div class="col-12 col-xl-11">
+        <div class="d-flex flex-column justify-content-center align-items-stretch py-2 px-3 border border-light mt-1" id="tareasDiarias"></div>
       </div>
     </div>
   </div>
@@ -57,6 +52,7 @@
     API.getUser().then(user => window.user = user.id).catch(() => location.href="login.html");
     SocialDrawer.loadHotKeys(document.getElementById("hotKeysDiv"));
     let tareasDiarias = document.getElementById("tareasDiarias");
+    API.getTareasDiarias().then(tareas => SocialDrawer.loadTareasDiarias(tareas, tareasDiarias, false)).catch(HELPEX.generalUnespectedError);
 
     API.getUser()
     .then(user => {
@@ -66,35 +62,7 @@
       profilePic.src = user.profilePic;
     })
     .catch(error => HELPEX.showMSG("Error al cargar inicio", "Se ha producido un error al cargar la página de inicio", error));
-    PostComposer.iniPostComposer("postComposer", refreshFeed);
 
-    var feedDiv = document.getElementById("feedDiv");
-    var feedLoaded = 0;
-    var feedLoading = false;
-    function fetchFeed(){
-      if(!feedLoading){
-        feedLoading = true;
-        API.getFeed(feedLoaded)
-        .then(feed => {
-          SocialDrawer.drawPosts(feed, feedDiv, refreshFeed);
-          feedLoaded += feed.length;
-          feedLoading = false;
-        })
-        .catch(error => HELPEX.showMSG("Error al cargar feed", "Se ha producido un error inesperado al cargar el feed", error));
-      }
-    }
-    function refreshFeed(){
-      HELPEX.removeAllChilds(feedDiv);
-      feedLoaded = 0;
-      feedLoading = false;
-      fetchFeed();
-
-      API.getTareasDiarias().then(tareas => SocialDrawer.loadTareasDiarias(tareas, tareasDiarias)).catch(HELPEX.generalUnespectedError);
-    }
-    $(window).scroll(() => {
-      if($(window).scrollTop() + $(window).height() >= $("#feedDiv").height()) fetchFeed();
-    });
-    refreshFeed();
   </script>
 </body>
 

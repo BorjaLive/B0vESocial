@@ -56,6 +56,14 @@
             case "createPostAudio":
                 //TODO: Investigar como procesar audio con la libreria de ffmpeg para php
             break;
+            case "createTipoMedalla":
+                if($level < 2) throw new Exception("Nivel de permiso insuficiente.");
+                $id = createTipoMedalla($_POST["nombre"], $_POST["precio"]);
+                $output = "../data/medallas/";
+                if(!file_exists($output)) mkdir($output, 0777, true);
+                $output .= "/$id.gif";
+                move_uploaded_file($_FILES['file']['tmp_name'], $output);
+            break;
             default:
                 echo json_encode(array("status" => "error", "msg" => ["error" => "Action not recognized"]));
                 die();

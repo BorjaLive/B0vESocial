@@ -7,8 +7,34 @@
     
     define("MAX_FILE_SIZE", 100*1024*1024);
     define("PROFILE_PIC_SIZE", "512");
-    define("PRECIO_TOKISKI", 30000);
+    define("PRECIO_TOKISKI", 3000);
     define("MAX_POSTS_PER_QUERY", 10);
+
+    define("NOTIFICATION_MENCION", 1);
+    define("NOTIFICATION_VOCIFERADO", 2);
+    define("NOTIFICATION_FAVORITO", 3);
+    define("NOTIFICATION_RESPONDIDO", 4);
+    define("NOTIFICATION_MEDALLA", 5);
+
+    define("TAREA_TODAS", 1);
+    define("TAREA_VER_NOTIFICACIONES", 2);
+    define("TAREA_PUBLICAR", 3);
+    define("TAREA_RESPONDER", 4);
+    define("TAREA_MENCIONAR", 5);
+    define("TAREA_VOCIFERAR", 6);
+    define("TAREA_FAVORITO", 7);
+
+    define("MONEDAS_TAREA", [
+        TAREA_TODAS => 40,
+        TAREA_VER_NOTIFICACIONES => 10,
+        TAREA_PUBLICAR => 10,
+        TAREA_RESPONDER => 10,
+        TAREA_MENCIONAR => 10,
+        TAREA_VOCIFERAR => 10,
+        TAREA_FAVORITO => 10
+    ]);
+
+    define("PRODUCTO_100MONEDAS", 1);
 
     if(strtoupper(substr(PHP_OS, 0, 3)) === 'WIN'){
         define("FFMPEG_BIN", "C:\\Program Files\\ffmpeg\\ffmpeg.exe");
@@ -77,6 +103,16 @@
         $file = array_rand($files);
         return $files[$file];
     }
+    function extractAts($text){
+        $ats = [];
+        $parts = explode("@", $text);
+        array_shift($parts);
+        foreach($parts as $part){
+            $words = explode(" ", $part);
+            if($words[0] != "") $ats[] = $words[0];
+        }
+        return $ats;
+    }
 
 
 
@@ -104,6 +140,78 @@
 		$res = $mail->send();
 		//echo 'Mailer Error: '. $mail->ErrorInfo;
 		return $res;
+    }
+    function composeDateIntervalWithDivides($intervalo, $fechaName){
+        $group = "GROUP BY ";
+        $select = "";
+        $divName = "";
+        
+        if($intervalo === null) $intervalo = "week";
+        switch($intervalo){
+            case "year":
+                $group .= "YEAR(`$fechaName`)";
+                $select = "YEAR(`$fechaName`) as ";
+                $divName = "ano";
+            break;
+            case "month":
+                $group .= "YEAR($fechaName), MONTH($fechaName)";
+                $select = "CONCAT(MONTH($fechaName), '/', YEAR($fechaName)) as ";
+                $divName = "mes";
+            break;
+            case "week":
+                $group .= "YEAR($fechaName), WEEK($fechaName)";
+                $select = "CONCAT(WEEK($fechaName), '/', YEAR($fechaName)) as ";
+                $divName = "semana";
+            break;
+            case "day":
+                $group .= "YEAR($fechaName), MONTH($fechaName), DAY($fechaName)";
+                $select = "CONCAT(DAY($fechaName), '/', MONTH($fechaName), '/', YEAR($fechaName)) as ";
+                $divName = "dia";
+            break;
+        }
+        $select .= "`$divName`";
+
+        return [$group, $select, $divName];
+    }
+    function tabularEstadisticas($res, $statName, $divName){
+        $estadistica = [];
+        $times = [];
+        $header = [$divName];
+        while($row = $res->fetch_assoc()){
+            $times[$row[$divName]][] = $row;
+        }
+
+        foreach($times as $time => $rows){
+            $estRow = [$time];
+            foreach($rows as $row){
+                $head = "";
+                foreach($row as $key => $elem){
+                    if($key != $statName && $key != $divName && substr($key, 0, 2) != "id"){
+                        $head .= $elem." ";
+                    }
+                }
+                if($head == "") $head = "Todo";
+                $pos = array_search($head, $header);
+                if($pos === false){
+                    $header[] = $head;
+                    $pos = count($header)-1;
+                }
+                $estRow[$pos] = intval($row[$statName]);
+            }
+            $estadistica[] = $estRow;
+        }
+        //var_dump($estadistica);
+        $n = count($header);
+        foreach($estadistica as $key => $stat){
+            for($i = 1; $i < $n; $i++){
+                if(!isset($stat[$i])){
+                    $estadistica[$key][$i] = 0;
+                }
+            }
+            ksort($estadistica[$key]);
+        }
+
+        return array_merge([$header], $estadistica);
     }
     function sendMailActivation($email, $usuario, $codigo){
         sendMail($email, "B0vE Social: Codigo de activación", "

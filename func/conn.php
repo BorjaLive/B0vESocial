@@ -1,5 +1,15 @@
 <?php
     include "constants.php";
+    use PayPal\Api\Amount;
+    use PayPal\Api\Details;
+    use PayPal\Api\Item;
+    use PayPal\Api\ItemList;
+    use PayPal\Api\Payer;
+    use PayPal\Api\Payment;
+    use PayPal\Api\RedirectUrls;
+    use PayPal\Api\Transaction;
+    use \PayPal\Rest\ApiContext;
+    use \PayPal\Auth\OAuthTokenCredential;
 
     $link = conn();
 
@@ -138,8 +148,21 @@
     }
 
 
-    function createPost($texto, $padre, $imagen = false, $video = false){
+    function createPost($texto, $padre = null, $imagen = false, $video = false){
         global $link, $userID;
+
+        $mencions = [];
+        $ats = extractAts($texto);
+        foreach($ats as $at){
+            if($at != "tokiski"){
+                try{
+                    $atID = getUserIDbySID($at);
+                    $mencions[] = $atID;
+                }catch(Exception $e){
+                    throw new Exception("La mencicición @".$at." no se corresponde con ningún usuario registrado. \n ".$e);
+                }
+            }
+        }
 
         $texto = strip_tags($texto);
         $tokiskis = getUser($userID)["tokiskis"];
@@ -161,6 +184,19 @@
 
         $id = $link->insert_id;
         $post = getPost($id);
+
+        foreach($mencions as $mencion){
+            createNotification($mencion, $id, $userID, NOTIFICATION_MENCION);
+        }
+        if($padre !== null){
+            $padreData = getPost($padre);
+            createNotification($padreData["usuario"]["id"], $id, $userID, NOTIFICATION_RESPONDIDO);
+            performTareaDiaria(TAREA_RESPONDER);
+        }
+
+        performTareaDiaria(TAREA_PUBLICAR);
+        if(count($mencions) != 0) performTareaDiaria(TAREA_MENCIONAR);
+
         return [$id, date2path($post["fecha"])];
     }
     function deletePost($post){
@@ -185,34 +221,100 @@
     function doFavorito($post){
         global $link, $userID;
 
-        $favorito = getPost($post)["favorito"];
+        $postData = getPost($post);
+        $favorito = $postData["favorito"];
         if($favorito){
             $stmt = $link->prepare("DELETE FROM `favorito` WHERE `usuario` = ? AND `post` = ?");
         }else{
             $stmt = $link->prepare("INSERT INTO `favorito` (`usuario`, `post`) VALUES (?, ?)");
+            createNotification($postData["usuario"]["id"], $postData["id"], $userID, NOTIFICATION_FAVORITO);
         }
         if($link->error) throw new Exception($link->error);
         $stmt->bind_param("ii", $userID, $post);
         $stmt->execute();
         if($stmt->error) throw new Exception($stmt->error);
         $stmt->close();
+
+        performTareaDiaria(TAREA_FAVORITO);
+
         return !$favorito;
     }
     function doVociferar($post){
         global $link, $userID;
         
-        $vociferado = getPost($post)["vociferado"];
+        $postData = getPost($post);
+        $vociferado = $postData["vociferado"];
         if($vociferado){
             $stmt = $link->prepare("DELETE FROM `vociferar` WHERE `usuario` = ? AND `post` = ?");
         }else{
             $stmt = $link->prepare("INSERT INTO `vociferar` (`usuario`, `post`) VALUES (?, ?)");
+            createNotification($postData["usuario"]["id"], $postData["id"], $userID, NOTIFICATION_VOCIFERADO);
         }
         if($link->error) throw new Exception($link->error);
         $stmt->bind_param("ii", $userID, $post);
         $stmt->execute();
         if($stmt->error) throw new Exception($stmt->error);
         $stmt->close();
+
+        performTareaDiaria(TAREA_VOCIFERAR);
+
         return !$vociferado;
+    }
+    function darMedalla($id, $post){
+        global $link, $userID;
+
+        $stmt = $link->prepare("SELECT `usuario` FROM `medalla` WHERE `id` = ?");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $stmt->bind_result($usuario);
+        if(!$stmt->fetch()) throw new Exception("Medalla no encontrada");
+        $stmt->close();
+
+        if($usuario != $userID) throw new Exception("No puedes dar una medalla que no te pertenece.");
+
+        //TODO: No permitir que se den medallas a un post propio
+        $stmt = $link->prepare("SELECT `post`.`usuario` FROM `post` WHERE `id` = ?");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("i", $post);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $stmt->bind_result($autor);
+        if(!$stmt->fetch()) throw new Exception("Post no encontrado");
+        $stmt->close();
+
+        if($autor == $userID) throw new Exception("No puedes dar una medalla a un post tuyo.");
+
+        $stmt = $link->prepare("UPDATE `medalla` SET `usuario` = NULL, `post` = ? WHERE `id` = ?");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("ii", $post, $id);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $stmt->close();
+
+        createNotification($autor, $post, $userID, NOTIFICATION_MEDALLA);
+    }
+    function apropiarMedalla($id){
+        global $link, $userID;
+
+        $stmt = $link->prepare("SELECT `post`.`usuario` FROM `medalla` INNER JOIN `post` ON(`medalla`.`post` = `post`.`id`) WHERE `medalla`.`id` = ?");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $stmt->bind_result($usuario);
+        if(!$stmt->fetch()) throw new Exception("Medalla no encontrada");
+        $stmt->close();
+
+        if($usuario != $userID) throw new Exception("No puedes apropiarte de una medalla que no está en un post tuyo.");
+
+        $stmt = $link->prepare("UPDATE `medalla` SET `usuario` = ?, `post` = NULL WHERE `id` = ?");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("ii", $userID, $id);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $stmt->close();
     }
 
     function doAcechar($usuario){
@@ -288,7 +390,173 @@
         if(getUser($usuario)["monedas"] < $precio) throw new Exception("No tienes suficientes monedas");
         $stmt = $link->prepare("UPDATE `usuario` SET `monedas` = `monedas` - ? WHERE `id` = ?");
         if($link->error) throw new Exception($link->error);
-        $stmt->bind_param("ii", $precio, $userID);
+        $stmt->bind_param("ii", $precio, $usuario);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $stmt->close();
+    }
+    function agregarDinero($usuario, $monedas){
+        global $link;
+
+        $stmt = $link->prepare("UPDATE `usuario` SET `monedas` = `monedas` + ? WHERE `id` = ?");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("ii", $monedas, $usuario);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $stmt->close();
+    }
+    function comprarModenas($euros){
+        global $userID;
+
+        $monedas = $euros*100;
+
+        $apiContext = new ApiContext(new OAuthTokenCredential(PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET));
+
+        $payer = new Payer();
+        $payer->setPaymentMethod("paypal");
+
+        $item1 = new Item();
+        $item1->setName('100 Monedas B0vE')
+            ->setCurrency('EUR')
+            ->setQuantity($euros)
+            ->setSku(PRODUCTO_100MONEDAS)
+            ->setPrice(1);
+
+        $itemList = new ItemList();
+        $itemList->setItems([$item1]);
+
+        $amount = new Amount();
+        $amount->setCurrency("EUR")
+            ->setTotal($euros);
+
+        $transaction = new Transaction();
+        $transaction->setAmount($amount)
+            ->setItemList($itemList)
+            ->setDescription("Compra de ".$monedas." monedas B0vE.")
+            ->setInvoiceNumber(uniqid())
+            ->setCustom($userID);
+
+        $redirectUrls = new RedirectUrls();
+        $redirectUrls->setReturnUrl(EXTERNAL_URL."payment.php?success=true")
+            ->setCancelUrl(EXTERNAL_URL."payment.php?success=false");
+
+        $payment = new Payment();
+        $payment->setIntent("sale")
+            ->setPayer($payer)
+            ->setRedirectUrls($redirectUrls)
+            ->setTransactions([$transaction]);
+
+        $request = clone $payment;
+
+        try {
+            $payment->create($apiContext);
+        } catch (Exception $ex) {
+            throw $ex;
+        }
+
+        $approvalUrl = $payment->getApprovalLink();
+
+        return $approvalUrl;
+    }
+    function ejecutarComprarModenas($usuario, $euros, $paymentID){
+        global $link;
+
+        //Por el unique, fallará si esta repetido
+        $stmt = $link->prepare("INSERT INTO `compramoneda` (`usuario`, `euros`, `transaccion`) VALUES (?, ?, ?)");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("iis", $usuario, $euros, $paymentID);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $stmt->close();
+
+        agregarDinero($usuario, $euros * 100);
+    }
+
+    function createNotification($usuario, $post, $autor, $tipo){
+        global $link, $userID;
+
+        $stmt = $link->prepare("INSERT INTO `notificacion` (`usuario`, `post`, `autor`, `tipo`) VALUES (?, ?, ?, ?)");
+        //if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("iiii", $usuario, $post, $autor, $tipo);
+        $stmt->execute();
+        //if($stmt->error) throw new Exception($stmt->error);
+        $stmt->close();
+        //No importa si está duplicado y no se puede insertar
+    }
+    function performTareaDiaria($tipo){
+        global $link, $userID;
+
+        if(!isset(MONEDAS_TAREA[$tipo])) throw new Exception("Tipo de tarea diaria válida.");
+
+        $stmt = $link->prepare("INSERT INTO `tareasdiarias` (`usuario`, `tipo`) VALUES (?, ?)");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("ii", $userID, $tipo);
+        $stmt->execute();
+        if($stmt->error){
+            //Si no se puede insertar es porque ya esta, luego no se desbloquea y no se paga
+            $paga = null;
+        }else $paga = MONEDAS_TAREA[$tipo];
+        $stmt->close();
+        
+        
+
+        //Comprobar si las tiene todas
+        $stmt = $link->prepare("SELECT COUNT(`tipo`) FROM `tareasdiarias` WHERE `usuario` = ?");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("i", $userID);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $stmt->bind_result($n);
+        $stmt->fetch();
+        $stmt->close();
+        if($n == count(MONEDAS_TAREA)-1){
+            performTareaDiaria(TAREA_TODAS);
+        }
+    }
+    function cobrarTareaDiaria($tipo){
+        global $link, $userID;
+        if(!isset(MONEDAS_TAREA[$tipo])) throw new Exception("Tipo de tarea diaria válida.");
+
+        $stmt = $link->prepare("SELECT `cobrado` FROM `tareasdiarias` WHERE `usuario` = ? AND `tipo` = ?");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("ii", $userID, $tipo);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $stmt->bind_result($cobrado);
+        
+        if($stmt->fetch()){
+            if($cobrado == 1) throw new Exception("Ya has cobrado esta tarea.");
+        }else throw new Exception("No has completado la tarae.");
+        $stmt->close();
+
+        agregarDinero($userID, MONEDAS_TAREA[$tipo]);
+
+        $stmt = $link->prepare("UPDATE `tareasdiarias` SET `cobrado` = '1' WHERE `usuario` = ? AND `tipo` = ?");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("ii", $userID, $tipo);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $stmt->close();
+        
+        return MONEDAS_TAREA[$tipo];
+    }
+    function comprarMedalla($id){
+        global $link, $userID;
+
+        $stmt = $link->prepare("SELECT `precio`  FROM `tipomedalla` WHERE `id` = ?");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $stmt->bind_result($precio);
+        if(!$stmt->fetch()) throw new Exception("Tipo de medalla no encontrada");
+        $stmt->close();
+
+        pagar($userID, $precio);
+
+        $stmt = $link->prepare("INSERT INTO `medalla` (`tipo`, `usuario`) VALUES (?, ?)");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("ii", $id, $userID);
         $stmt->execute();
         if($stmt->error) throw new Exception($stmt->error);
         $stmt->close();
@@ -359,29 +627,61 @@
         $stmt->fetch();
         $stmt->close();
 
+        $user["medallas"] = [];
+        $stmt = $link->prepare("SELECT DISTINCT `tipo` FROM `medalla` WHERE `usuario` = ?");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("i", $user["id"]);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $stmt->bind_result($medalla);
+        while($stmt->fetch()) $user["medallas"][] = EXTERNAL_URL."data/medallas/$medalla.gif";
+        $stmt->close();
+
         if($data === null)
             return $user;
         else
             return array_merge($data, $user);
     }
+    function getUserIDbySID($sid){
+        global $link;
+
+        $stmt = $link->prepare("SELECT `id` FROM `usuario` WHERE `usuario` = ?");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("s", $sid);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $stmt->bind_result($id);
+        if(!$stmt->fetch()) throw new Exception("Usuario no encontrado");
+        $stmt->close();
+
+        return $id;
+    }
 
     function getPublicUser($usuario){
+        global $userID;
+
         $user = getUser($usuario);
-        unset($user["pass"]);
-        unset($user["email"]);
-        unset($user["activo"]);
-        unset($user["monedas"]);
-        unset($user["tokiskis"]);
+        if($user["id"] != $userID){
+            unset($user["pass"]);
+            unset($user["email"]);
+            unset($user["activo"]);
+            unset($user["monedas"]);
+            unset($user["tokiskis"]);
+        }
 
         return $user;
     }
     function getPublicUserData($usuario){
+        global $userID;
+
         $user = getUserData($usuario);
-        unset($user["pass"]);
-        unset($user["email"]);
-        unset($user["activo"]);
-        unset($user["monedas"]);
-        unset($user["tokiskis"]);
+        if($user["id"] != $userID){
+            unset($user["pass"]);
+            unset($user["email"]);
+            unset($user["activo"]);
+            unset($user["monedas"]);
+            unset($user["tokiskis"]);
+        }
 
         return $user;
     }
@@ -416,6 +716,7 @@
         if($completo){
             //Los hijos de este post
             $stmt = $link->prepare("SELECT `id` FROM `post` WHERE `padre` = ? ORDER BY `fecha` DESC");
+            if($link->error) throw new Exception($link->error);
             $stmt->bind_param("i", $id);
             $stmt->execute();
             if($stmt->error) throw new Exception($stmt->error);
@@ -431,7 +732,22 @@
                 $data["respuestas"][] = getPost($respuesta);
             }
 
+            //El padre del post
             if($data["padre"] !== null) $data["padre"] = getPost($data["padre"]);
+
+            //Las medallas que tiene
+            $stmt = $link->prepare("SELECT `id`, `tipo` FROM `medalla` WHERE `post` = ?");
+            if($link->error) throw new Exception($link->error);
+            $stmt->bind_param("i", $id);
+            $stmt->execute();
+            if($stmt->error) throw new Exception($stmt->error);
+            $res = $stmt->get_result();
+            $data["medallas"] = [];
+            while($medalla = $res->fetch_array(MYSQLI_ASSOC)){
+                $medalla["icon"] = EXTERNAL_URL."data/medallas/".$medalla["tipo"].".gif";
+                $data["medallas"][] = $medalla;
+            }
+            $stmt->close();
         }
 
         return $data;
@@ -440,7 +756,7 @@
         global $link;
 
         list($tipos, $parametros, $where) = postPrepareParameter($usuario, $foto, $video, $inicio);
-        $stmt = $link->prepare("SELECT `post`.`id`, `texto`, `foto`, `video`, `post`.`usuario`, `usuario`.`usuario`, `fecha`, `nombre` FROM `post` INNER JOIN `usuario` ON(`post`.`usuario` = `usuario`.`id`) WHERE `post`.`usuario` = ? $where ORDER BY `fecha` DESC  LIMIT ? OFFSET ?");
+        $stmt = $link->prepare("SELECT `post`.`id`, `texto`, `foto`, `video`, `post`.`usuario`, `usuario`.`usuario`, `fecha`, `nombre`, NULLIF(GROUP_CONCAT(IFNULL(`medalla`.`tipo`, 'null') SEPARATOR '|'), 'null') as `medallas` FROM `post` LEFT OUTER JOIN `medalla` ON(`post`.`id` = `medalla`.`post`) INNER JOIN `usuario` ON(`post`.`usuario` = `usuario`.`id`) WHERE `post`.`usuario` = ? $where GROUP BY `post`.`id` ORDER BY `fecha` DESC  LIMIT ? OFFSET ?");
         if($link->error) throw new Exception($link->error);
         $stmt->bind_param($tipos, ...$parametros);
     
@@ -450,7 +766,7 @@
         global $link;
 
         list($tipos, $parametros, $where) = postPrepareParameter($usuario, $foto, $video, $inicio);
-        $stmt = $link->prepare("SELECT `post`.`id`, `texto`, `foto`, `video`, `post`.`usuario`, `usuario`.`usuario`, `fecha`, `nombre` FROM `post` INNER JOIN `usuario` ON(`post`.`usuario` = `usuario`.`id`) WHERE `post`.`id` IN (SELECT `post` FROM `vociferar` WHERE `vociferar`.`usuario` = ?) $where  LIMIT ? OFFSET ?");
+        $stmt = $link->prepare("SELECT `post`.`id`, `texto`, `foto`, `video`, `post`.`usuario`, `usuario`.`usuario`, `fecha`, `nombre`, NULLIF(GROUP_CONCAT(IFNULL(`medalla`.`tipo`, 'null') SEPARATOR '|'), 'null') as `medallas` FROM `post` LEFT OUTER JOIN `medalla` ON(`post`.`id` = `medalla`.`post`) INNER JOIN `usuario` ON(`post`.`usuario` = `usuario`.`id`) WHERE `post`.`id` IN (SELECT `post` FROM `vociferar` WHERE `vociferar`.`usuario` = ?) $where GROUP BY `post`.`id` LIMIT ? OFFSET ?");
         if($link->error) throw new Exception($link->error);
         $stmt->bind_param($tipos, ...$parametros);
     
@@ -460,7 +776,7 @@
         global $link;
 
         list($tipos, $parametros, $where) = postPrepareParameter($usuario, $foto, $video, $inicio);
-        $stmt = $link->prepare("SELECT `post`.`id`, `texto`, `foto`, `video`, `post`.`usuario`, `usuario`.`usuario`, `fecha`, `nombre` FROM `post` INNER JOIN `usuario` ON(`post`.`usuario` = `usuario`.`id`) WHERE `post`.`id` IN (SELECT `post` FROM `favorito` WHERE `favorito`.`usuario` = ?) $where  LIMIT ? OFFSET ?");
+        $stmt = $link->prepare("SELECT `post`.`id`, `texto`, `foto`, `video`, `post`.`usuario`, `usuario`.`usuario`, `fecha`, `nombre`, NULLIF(GROUP_CONCAT(IFNULL(`medalla`.`tipo`, 'null') SEPARATOR '|'), 'null') as `medallas` FROM `post` LEFT OUTER JOIN `medalla` ON(`post`.`id` = `medalla`.`post`) INNER JOIN `usuario` ON(`post`.`usuario` = `usuario`.`id`) WHERE `post`.`id` IN (SELECT `post` FROM `favorito` WHERE `favorito`.`usuario` = ?) $where GROUP BY `post`.`id` LIMIT ? OFFSET ?");
         if($link->error) throw new Exception($link->error);
         $stmt->bind_param($tipos, ...$parametros);
     
@@ -471,7 +787,7 @@
         $limite = MAX_POSTS_PER_QUERY;
 
         $user = "%@".getUser($userID)["usuario"]."%";
-        $stmt = $link->prepare("SELECT `post`.`id`, `texto`, `foto`, `video`, `post`.`usuario`, `usuario`.`usuario`, `fecha`, `nombre` FROM `post` INNER JOIN `usuario` ON(`post`.`usuario` = `usuario`.`id`) WHERE `post`.`usuario` = ? OR `post`.`usuario` IN (SELECT `acechado` FROM `acechar` WHERE `acechador` = ?) OR `texto` LIKE ? OR `texto` LIKE '%@tokiski%' OR `post`.`id` IN (SELECT `post` FROM `vociferar` WHERE `vociferar`.`usuario` = ? OR `vociferar`.`usuario` IN (SELECT `acechado` FROM `acechar` WHERE `acechador` = ?)) ORDER BY `fecha` DESC LIMIT ? OFFSET ?");
+        $stmt = $link->prepare("SELECT `post`.`id`, `texto`, `foto`, `video`, `post`.`usuario`, `usuario`.`usuario`, `fecha`, `nombre`, NULLIF(GROUP_CONCAT(IFNULL(`medalla`.`tipo`, 'null') SEPARATOR '|'), 'null') as `medallas` FROM `post` LEFT OUTER JOIN `medalla` ON(`post`.`id` = `medalla`.`post`) INNER JOIN `usuario` ON(`post`.`usuario` = `usuario`.`id`) WHERE `post`.`usuario` = ? OR `post`.`usuario` IN (SELECT `acechado` FROM `acechar` WHERE `acechador` = ?) OR `texto` LIKE ? OR `texto` LIKE '%@tokiski%' OR `post`.`id` IN (SELECT `post` FROM `vociferar` WHERE `vociferar`.`usuario` = ? OR `vociferar`.`usuario` IN (SELECT `acechado` FROM `acechar` WHERE `acechador` = ?)) GROUP BY `post`.`id` ORDER BY `fecha` DESC LIMIT ? OFFSET ?");
         if($link->error) throw new Exception($link->error);
         $stmt->bind_param("iisiiii", $userID, $userID, $user, $userID, $userID, $limite, $inicio);
 
@@ -496,12 +812,23 @@
     function postReFormat($stmt){
         $stmt->execute();
         if($stmt->error) throw new Exception($stmt->error);
-        $stmt->bind_result($id, $texto, $foto, $video, $usuarioID, $usuario, $fecha, $nombre);
+        $stmt->bind_result($id, $texto, $foto, $video, $usuarioID, $usuario, $fecha, $nombre, $medallas);
 
         $posts = [];
         while($stmt->fetch()){
             if($foto) $foto = EXTERNAL_URL."data/posts/".date2path($fecha)."/".$id.".jpg"; else $foto = null;
             if($video) $video = EXTERNAL_URL."data/posts/".date2path($fecha)."/".$id.".mp4"; else $video = null;
+
+            if($medallas === null){
+                $medallas = [];
+            }else{
+                $medallasIDs = explode("|", $medallas);
+                $medallas = [];
+                foreach($medallasIDs as $medallaID){
+                    $medallas[] = EXTERNAL_URL."data/medallas/$medallaID.gif";
+                }
+            }
+
             $posts[] = [
                 "id" => $id,
                 "texto" => $texto,
@@ -513,6 +840,7 @@
                     "nombre" => $nombre,
                     "profilePic" => EXTERNAL_URL."data/profiles/$usuarioID.jpg"
                 ],
+                "medallas" => $medallas,
                 "fecha" => $fecha
             ];
         }
@@ -563,6 +891,92 @@
         $stmt->close();
 
         return $acechadores;
+    }
+    function getNotificaciones(){
+        global $link, $userID;
+
+        $stmt = $link->prepare("SELECT * FROM `notificacion` WHERE `usuario` = ? ORDER BY `fecha` DESC LIMIT 100");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("i", $userID);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $res = $stmt->get_result();
+
+        $notificaciones = [];
+        while($data = $res->fetch_array(MYSQLI_ASSOC)){
+            if($data["post"] !== null) $data["post"] = getPost($data["post"], true);
+            if($data["autor"] !== null) $data["autor"] = getUser($data["autor"]);
+            $notificaciones[] = $data;
+        }
+        $stmt->close();
+
+        performTareaDiaria(TAREA_VER_NOTIFICACIONES);
+
+        return $notificaciones;
+    }
+    function getTareasDiarias(){
+        global $link, $userID;
+
+        $tareas = [];
+        foreach(array_keys(MONEDAS_TAREA) as $tarea){
+            $tareas[$tarea] = [
+                "conseguido" => false,
+                "cobrado" => false
+            ];
+        }
+
+        $stmt = $link->prepare("SELECT `tipo`, `cobrado` FROM `tareasdiarias` WHERE `usuario` = ?");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("i", $userID);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $stmt->bind_result($tipo, $cobrado);
+
+        while($stmt->fetch()){
+            $tareas[$tipo]["conseguido"] = true;
+            $tareas[$tipo]["cobrado"] = $cobrado == 1;
+        }
+        $stmt->close();
+
+        return $tareas;
+    }
+    function getTipoMedallasUser(){
+        global $link, $userID;
+
+        $stmt = $link->prepare("SELECT t.`id`, t.`nombre`, t.`precio`, (SELECT COUNT(*) FROM `medalla` m WHERE m.`tipo` = t.`id` AND m.`usuario` = ?) as `cantidad` FROM `tipomedalla` t ORDER BY t.`precio`");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("i", $userID);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $res = $stmt->get_result();
+
+        $medallas = [];
+        while($data = $res->fetch_array(MYSQLI_ASSOC)){
+            $data["icon"] = EXTERNAL_URL."data/medallas/".$data["id"].".gif";
+            $medallas[] = $data;
+        }
+        $stmt->close();
+
+        return $medallas;
+    }
+    function getMedallas(){
+        global $link, $userID;
+
+        $stmt = $link->prepare("SELECT `medalla`.`id`, `medalla`.`tipo`, `nombre`, COUNT(*) as `cantidad` FROM `medalla` INNER JOIN `tipomedalla` ON(`medalla`.`tipo` = `tipomedalla`.`id`) WHERE `medalla`.`usuario` = ? GROUP BY `tipo`");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("i", $userID);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $res = $stmt->get_result();
+
+        $medallas = [];
+        while($data = $res->fetch_array(MYSQLI_ASSOC)){
+            $data["icon"] = EXTERNAL_URL."data/medallas/".$data["tipo"].".gif";
+            $medallas[] = $data;
+        }
+        $stmt->close();
+
+        return $medallas;
     }
 
     function getEstados(){
@@ -692,6 +1106,31 @@
         if($stmt->error) throw new Exception($stmt->error);
         $stmt->close();
     }
+    function createTipoMedalla($nombre, $precio){
+        global $link;
+
+        $stmt = $link->prepare("INSERT INTO `tipomedalla` (`nombre`, `precio`) VALUES (?, ?)");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("si", $nombre, $precio);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $stmt->close();
+
+        return $link->insert_id;
+    }
+    function deleteTipoMedalla($id){
+        global $link;
+
+        $stmt = $link->prepare("DELETE FROM `tipomedalla` WHERE `id` = ?");
+        if($link->error) throw new Exception($link->error);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $stmt->close();
+
+        $icon = "../data/medallas/$id.gif";
+        if(file_exists($icon)) unlink($icon);
+    }
 
     function getCodigoMonedas($valor){
         global $link;
@@ -719,8 +1158,59 @@
 
         return $codigos;
     }
+    function getCompras($euros = null){
+        global $link;
 
-    function test($id){
-        return array_disect(getAcechadores($id), "id");
+        $where = "";
+        if($euros !== null) $where = "WHERE `euros` = ?";
+
+        $stmt = $link->prepare("SELECT `euros`, `transaccion`, `fecha`, `usuario`.`id`, `usuario`.`nombre`  FROM `compramoneda`  INNER JOIN `usuario` ON (`compramoneda`.`usuario` = `usuario`.`id`) $where");
+        if($link->error) throw new Exception($link->error);
+        if($euros !== null) $stmt->bind_param("i", $euros);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $res = $stmt->get_result();
+
+        $compras = [];
+        while($data = $res->fetch_array(MYSQLI_ASSOC)){
+            $data["profilePic"] = EXTERNAL_URL."data/profiles/".$data["id"].".jpg";
+            $compras[] = $data;
+        }
+        
+        return $compras;
+    }
+    function getEstadisticaUsuariosActivos($fechaInicio = null, $fechaFin = null, $intervalo = null){
+        global $link;
+
+        list($group, $select, $divName) = composeDateIntervalWithDivides($intervalo, "dia");
+
+        $sql = "SELECT `dia`, `cantidad`, $select FROM `estadisticausuariosactivos` $group ORDER BY `dia`";
+        $res = $link->query($sql);
+        if($link->error) throw new Exception($sql." --> ".$link->error);
+
+        $tabla = tabularEstadisticas($res, "cantidad", $divName);
+        $tabla[0][1] = "Usuarios activos";
+        return $tabla;
+    }
+    function getTipoMedallas(){
+        global $link;
+
+        $stmt = $link->prepare("SELECT `id`, `nombre`, `precio`  FROM `tipomedalla`");
+        if($link->error) throw new Exception($link->error);
+        $stmt->execute();
+        if($stmt->error) throw new Exception($stmt->error);
+        $res = $stmt->get_result();
+
+        $medallas = [];
+        while($data = $res->fetch_array(MYSQLI_ASSOC)){
+            $data["icon"] = EXTERNAL_URL."data/medallas/".$data["id"].".gif";
+            $medallas[] = $data;
+        }
+        
+        return $medallas;
+    }
+
+    function test($text){
+        return getNotificaciones();
     }
 ?>
