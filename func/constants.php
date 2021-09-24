@@ -3,6 +3,8 @@
     include "installation_constants.php";
 	use PHPMailer\PHPMailer\PHPMailer;
 	use PHPMailer\PHPMailer\SMTP;
+    use \PayPal\Rest\ApiContext;
+    use \PayPal\Auth\OAuthTokenCredential;
 
     
     define("MAX_FILE_SIZE", 100*1024*1024);
@@ -476,5 +478,14 @@
         sendMail("borjainlive@gmail.com", "B0vE Social: Compra", "
             Un usuario ha comprado $monedas monedas ($euros €)
         ");
+    }
+
+    function getPaypalContext(){
+        $apiContext = new ApiContext(new OAuthTokenCredential(PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET));
+        $apiContext->setConfig([
+            "mode" => PAYPAL_MODE
+        ]);
+
+        return $apiContext;
     }
 ?>

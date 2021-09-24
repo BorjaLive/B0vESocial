@@ -12,7 +12,7 @@
     $msg = "";
     try{
         if (isset($_GET['success']) && $_GET['success'] == 'true') {
-            $apiContext = new ApiContext(new OAuthTokenCredential(PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET));
+            $apiContext = getPaypalContext();
     
             $paymentId = $_GET['paymentId'];
             $payment = Payment::get($paymentId, $apiContext);

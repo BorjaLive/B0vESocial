@@ -411,7 +411,7 @@
 
         $monedas = $euros*100;
 
-        $apiContext = new ApiContext(new OAuthTokenCredential(PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET));
+        $apiContext = getPaypalContext();
 
         $payer = new Payer();
         $payer->setPaymentMethod("paypal");
