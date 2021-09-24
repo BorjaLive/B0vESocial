@@ -3,3 +3,4 @@ data
 func/composer.lock
 func/vendor
 func/installation_constants.php
+libs/installation_constants.js
