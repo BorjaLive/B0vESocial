@@ -68,6 +68,7 @@
         $id = $link->insert_id;
         if($id == 0) throw new Exception("No se ha podido registrar el usuario. Posiblemente el nombre o correo ya esté en uso.");
         
+        if(!file_exists("../data/profiles/")) mkdir("../data/profiles/", 0777, true);
         copy(randomFileFromDir("../data/defaultProfiles"), "../data/profiles/$id.jpg");
 
         $code = generateRandomCode();
