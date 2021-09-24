@@ -471,4 +471,10 @@
             </html>
         ");
     }
+    function sendMailCompra($euros){
+        $monedas = $euros*100;
+        sendMail(MAIL_ADMIN, "B0vE Social: Compra", "
+            Un usuario ha comprado $monedas monedas ($euros €)
+        ");
+    }
 ?>

@@ -471,6 +471,8 @@
         $stmt->close();
 
         agregarDinero($usuario, $euros * 100);
+
+        sendMailCompra($euros);
     }
 
     function createNotification($usuario, $post, $autor, $tipo){
