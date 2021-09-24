@@ -119,7 +119,7 @@
     function sendMail($email, $subject, $body){
         $mail = new PHPMailer;
 		$mail->isSMTP();
-		$mail->SMTPDebug = SMTP::DEBUG_SERVER;
+		$mail->SMTPDebug = SMTP::DEBUG_OFF;
 		$mail->Host = MAIL_HOST;
 		$mail->Port = MAIL_PORT;
 		$mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
