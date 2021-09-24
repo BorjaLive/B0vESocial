@@ -1,5 +1,5 @@
 import HELPEX from "./helpex.js";
-import {SERVER} from "./constants.js";
+import {SERVER} from "./installation_constants.js";
 
 const API_ENDPOINT = SERVER+"api/";
 const API_FILE_ENDPOINT = API_ENDPOINT + "file.php";

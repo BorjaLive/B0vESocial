@@ -1,5 +1,3 @@
-export const SERVER = "http://localhost/B0vESocial/";
-export const ROOT = "/B0vESocial/";
 export const MAX_CHARS_IN_POST = 150;
 export const PROFILE_PIC_PLACEHOLDER = "img/placeHolderProfilePic.jpg";
 export const NOTIFICATION = {MENCION: 1, VOCIFERADO: 2, FAVORITO: 3, RESPONDIDO: 4, MEDALLA: 5}

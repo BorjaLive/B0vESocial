@@ -1,4 +1,4 @@
-import {ROOT} from "./constants.js"
+import {ROOT} from "./installation_constants.js"
 
 export default {
     loadComp: (nombre, div) => {
