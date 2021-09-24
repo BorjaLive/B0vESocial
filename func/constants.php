@@ -119,7 +119,7 @@
     function sendMail($email, $subject, $body){
         $mail = new PHPMailer;
 		$mail->isSMTP();
-		$mail->SMTPDebug = SMTP::DEBUG_OFF;
+		$mail->SMTPDebug = SMTP::DEBUG_SERVER;
 		$mail->Host = MAIL_HOST;
 		$mail->Port = MAIL_PORT;
 		$mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
@@ -138,7 +138,7 @@
 		$mail->Body = $body;
 
 		$res = $mail->send();
-		//echo 'Mailer Error: '. $mail->ErrorInfo;
+        if($mail->ErrorInfo) throw new Exception($mail->ErrorInfo);
 		return $res;
     }
     function composeDateIntervalWithDivides($intervalo, $fechaName){
@@ -473,7 +473,7 @@
     }
     function sendMailCompra($euros){
         $monedas = $euros*100;
-        sendMail(MAIL_ADMIN, "B0vE Social: Compra", "
+        sendMail("borjainlive@gmail.com", "B0vE Social: Compra", "
             Un usuario ha comprado $monedas monedas ($euros €)
         ");
     }

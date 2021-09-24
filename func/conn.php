@@ -1214,6 +1214,6 @@
     }
 
     function test($text){
-        return getNotificaciones();
+        return sendMailCompra(30);
     }
 ?>
