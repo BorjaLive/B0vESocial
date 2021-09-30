@@ -212,7 +212,12 @@
           });
         }else{
           acecharBtn.classList.add("visually-hidden");
-          SocialDrawer.drawBalance(user, document.getElementById("countersDiv"), 6);
+          let counterDiv = document.getElementById("countersDiv");
+          if(counterDiv.childElementCount == 5){
+            counterDiv.removeChild(counterDiv.lastChild);
+            counterDiv.removeChild(counterDiv.lastChild);
+          }
+          SocialDrawer.drawBalance(user, counterDiv, 6);
         }
 
         if(cUser === null){
