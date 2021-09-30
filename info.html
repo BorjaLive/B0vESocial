@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>B0vE Social</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous" />
+  <link rel="stylesheet" href="libs/bootstrap-modal-shake.css" />
+  <script src="https://kit.fontawesome.com/3afa5832cf.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="libs/commons.css" />
+  <link rel="stylesheet" href="font/style.css">
+</head>
+
+<body class="bg-dark text-light">
+  <div class="container">
+    <!-- Cabecera -->
+    <div class="row">
+      <div class="col">
+        <div class="d-flex border border-light p-2 m-1 justify-content-start align-items-center">
+          <img class="profile-pic mx-3" id="profilePic">
+          <h4>Inicio</h4>
+        </div>
+      </div>
+    </div>
+    <!-- Cuerpo -->
+    <div class="row">
+      <!-- Columna de atajos -->
+      <div class="col-12 col-xl-1">
+        <div class="d-flex flex-row flex-wrap justify-content-around align-items-center border border-light my-1" id="hotKeysDiv"></div>
+      </div>
+      <!-- Las estampas -->
+      <div class="col-12 col-xl-11">
+        <div class="p-3 border border-light my-1 mb-3">
+          <h4>Perfil</h4>
+          Una vez registrado en B0vE Social, tendras un perfil propio. Principalmente podrás cambiar tu nombre y foto de perfíl. También puede incluir información adicional (fecha de nacimiento, estado, sexo).
+          <br>
+          Los perfiles y toda su información son públicos, cualquier usuario registrado podrá verlos.
+          <h5>Acechar</h5>
+          Al acechar a una persona, verás en tu página principal sus publicaciones y 
+          
+          <hr>
+          <h4>Publicaciones</h4>
+          Escribir y sube imágenes o videos para compartirlos con el resto de la red. Puedes responder una publicación para continuar una conversación.
+          <br>
+          Hay un límite de caracteres en las publicaciones y sólo pueden contener una imagen o video.
+          <h5>Vociferar</h5>
+          Da visibilidad a las publicaciones de otros usuarios para que tus acechadores las vean.
+          <h5>Favorito</h5>
+          Guarda las publicaciones que te gusten para recordarlas y hacer sentir valorado al autor.
+          <h5>Menciones</h5>
+          Al incluir el nombre de un usuario (comienza por @) crearás un enlace para que tus acechadores encuentren facilmente al usuario. La persona mencionada verá tu mensaje en su página principal.
+          
+          <hr>
+          <h4>Monedas</h4>
+          Las monedas de la página sirven para comparar objetos. Podrás conseguir monedas usando de forma gratuita, pagando o mediante códigos promocionales.
+          <h5>Tareas diárias</h5>
+          Completa las tareas que se reinician diariamente para conseguir monedas gratis.
+          <h5>Medallas</h5>
+          Pequeñas imágenes divertidas que podrás comprar para adornar tu perfil o dejarlas en una publicación (de otro usuario). Es posible recolectar las medallas de tus publicaciones para tenerlas en tu perfil o darlas a otros usuarios, pero desaparecerán de tu publicación.
+          <h5>Estampas</h5>
+          Cartas coleccionables organizadas en colecciones. Aún no estan implementadas.
+          <h5>@tokiski</h5>
+          Hacer mención a @tokiski en una publicación hace que llegue a todos los usuarios. Es una forma de publicitarte, pero resultan bastante caros. Su valor es equivalente a 30 días de realizar tareas diárias.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script src="libs/bootstrap-modal-shake.js"></script>
+  <script type="module">
+    import API from "./libs/api.js";
+    import HELPEX from "./libs/helpex.js";
+    import CompLoader from "./libs/compLoader.js";
+    import SocialDrawer from "./libs/socialDrawer.js";
+
+    SocialDrawer.loadHotKeys(document.getElementById("hotKeysDiv"));
+
+    API.getUser()
+    .then(user => {
+      let profilePic = document.getElementById("profilePic");
+      profilePic.style.cursor = "pointer";
+      profilePic.onclick = () => location.href = "user.html?sid="+user.usuario;
+      profilePic.src = user.profilePic;
+    })
+    .catch(error => HELPEX.showMSG("Error al cargar inicio", "Se ha producido un error al cargar la página de inicio", error));
+
+  </script>
+</body>
+
+</html>
