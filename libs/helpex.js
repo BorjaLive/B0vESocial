@@ -213,7 +213,7 @@ export default {
         element.dispatchEvent(new Event(event));
     },
     isoDate2esp: iso => `${iso.substring(11, 16)} ${iso.substring(8, 10)}/${iso.substring(5, 7)}/${iso.substring(0, 4)}`,
-    isoDate2textEsp: iso => `${iso.substring(8, 10)} de ${meses[Math.floor(iso.substring(5, 7))].toLowerCase()} ${iso.substring(0, 4)}`,
+    isoDate2textEsp: iso => `${iso.substring(8, 10)} de ${meses[Math.floor(iso.substring(5, 7))-1].toLowerCase()} ${iso.substring(0, 4)}`,
     locale: {
         meses
     },
