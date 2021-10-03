@@ -33,7 +33,7 @@ function stylizeTest(text){
         let rightPos = text.substring(pos).search(" ");
         if(rightPos != -1)
             right = text.substring(pos+rightPos);
-        text = left + `<a href="user.html?sid=${palabra}">@${palabra}</a>` + right;
+        text = left + `<a href="user.html?sid=${HELPEX.trim(palabra, ".")}">@${palabra}</a>` + right;
         n[palabra]++;
     });
     return text;

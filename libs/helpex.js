@@ -223,6 +223,14 @@ export default {
         iElement.classList.add(icon);
         return iElement;
     },
+    trim: (s, c) => {
+        if (c === "]") c = "\\]";
+        if (c === "^") c = "\\^";
+        if (c === "\\") c = "\\\\";
+        return s.replace(new RegExp(
+            "^[" + c + "]+|[" + c + "]+$", "g"
+        ), "");
+    },
     setCookie: (cname, cvalue, exdays = 365) => {
         var d = new Date();
         d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
