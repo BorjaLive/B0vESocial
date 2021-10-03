@@ -156,6 +156,7 @@
         $ats = extractAts($texto);
         foreach($ats as $at){
             if($at != "tokiski"){
+                $at = rtrim($at, ".");
                 try{
                     $atID = getUserIDbySID($at);
                     $mencions[] = $atID;
