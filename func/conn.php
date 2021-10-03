@@ -214,10 +214,15 @@
         if($stmt->error) throw new Exception($stmt->error);
         $stmt->close();
 
-        if($postData["foto"] !== null)
-            unlink("../data/posts/".date2path($postData["fecha"])."/".$postData["id"].".jpg");
-        if($postData["video"] !== null)
-            unlink("../data/posts/".date2path($postData["fecha"])."/".$postData["id"].".mp4");
+        if($postData["foto"] !== null){
+            $path = "../data/posts/".date2path($postData["fecha"])."/".$postData["id"].".jpg";
+            if(file_exists($path)) unlink($path);
+        }
+            
+        if($postData["video"] !== null){
+            $path = "../data/posts/".date2path($postData["fecha"])."/".$postData["id"].".mp4";
+            if(file_exists($path)) unlink($path);
+        }
 
     }
     function doFavorito($post){
