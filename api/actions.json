@@ -22,6 +22,7 @@
     "updateUserData": 1,
     "deleteProfilePic": 1,
 
+    "createPost": 1,
     "deletePost": 1,
     "doFavorito": 1,
     "doVociferar": 1,
